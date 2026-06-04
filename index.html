@@ -39,7 +39,7 @@
 
     <div>
       <label class="block text-sm font-medium text-gray-600 mb-1">當前匯率 (外幣轉台幣)</label>
-      <input type="text" id="rateInput" inputmode="decimal" value="0.024" class="w-full bg-gray-100 border border-gray-200 rounded-lg p-3 focus:outline-none">
+      <input type="text" id="rateInput" inputmode="decimal" value="1.0" class="w-full bg-gray-100 border border-gray-200 rounded-lg p-3 focus:outline-none">
     </div>
 
   </div>
@@ -52,16 +52,14 @@
 
   <script>
     // ==========================================
-    // 參數配置區 (替換為你的金鑰)
+    // 參數配置區
     // ==========================================
     const MY_LIFF_ID = "2010297900-38V2U0d0";
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_KjMuAXfyZcRcjIJAGDrsxsg8n1KA7ROv_NeiGtzuOtjnvHMEIxAtTzMmCFECwVY/exec";
     
-    // 全域變數
     let currentTripId = null;
     let currentUserProfile = null;
     let currentGroupId = null;
-
 
     // 建立本地端匯率常數矩陣 (Local Rate Matrix)
     const RATE_MATRIX = {
@@ -71,10 +69,9 @@
       "VND": 0.0013
     };
 
-    // 掛載事件監聽器：當幣別下拉選單改變時，自動連動匯率輸入框
+    // 核心物理掛載：監聽幣別選單切換
     document.getElementById('currencySelect').addEventListener('change', function(e) {
       const selectedCurrency = e.target.value;
-      // 若矩陣內有值則帶入，否則預設為 1.0
       document.getElementById('rateInput').value = RATE_MATRIX[selectedCurrency] || 1.0;
     });
 
@@ -84,10 +81,7 @@
     async function initializeLiff() {
       try {
         await liff.init({ liffId: MY_LIFF_ID });
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
+        if (!liff.isLoggedIn()) return liff.login();
 
         const urlParams = new URLSearchParams(window.location.search);
         currentTripId = urlParams.get('tripId');
@@ -107,14 +101,9 @@
           const result = await res.json();
 
           if (result.status === "success") {
-            // 1. 將雲端設定的精準匯率覆寫進本地矩陣中
-            RATE_MATRIX[result.currency] = result.rate;
-            
-            // 2. 自動將下拉選單切換至該趟旅程的主外幣 (例如：KRW)
-            document.getElementById('currencySelect').value = result.currency;
-            
-            // 3. 自動將匯率輸入框更新為該精準匯率
-            document.getElementById('rateInput').value = result.rate;
+            RATE_MATRIX[result.currency] = result.rate; // 覆寫矩陣
+            document.getElementById('currencySelect').value = result.currency; // 切換下拉選單
+            document.getElementById('rateInput').value = result.rate; // 填入匯率
             
             document.getElementById('tripNameDisplay').innerText = `記一筆消費 [${result.tripName}]`;
             statusLog.innerText = "✅ 雲端匯率同步完成";
@@ -134,7 +123,7 @@
       }
     }
 
-    // 核心提交與通知邏輯 (與先前完全相同)
+    // 核心提交與通知邏輯
     async function submitExpense() {
       const btn = document.getElementById('submitBtn');
       const desc = document.getElementById('descInput').value;
