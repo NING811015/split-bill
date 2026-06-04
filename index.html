@@ -62,8 +62,24 @@
     let currentUserProfile = null;
     let currentGroupId = null;
 
+
+    // 建立本地端匯率常數矩陣 (Local Rate Matrix)
+    const RATE_MATRIX = {
+      "TWD": 1.0,
+      "KRW": 0.024,
+      "JPY": 0.22,
+      "VND": 0.0013
+    };
+
+    // 掛載事件監聽器：當幣別下拉選單改變時，自動連動匯率輸入框
+    document.getElementById('currencySelect').addEventListener('change', function(e) {
+      const selectedCurrency = e.target.value;
+      // 若矩陣內有值則帶入，否則預設為 1.0
+      document.getElementById('rateInput').value = RATE_MATRIX[selectedCurrency] || 1.0;
+    });
+
     // ==========================================
-    // LIFF 初始化與基因鎖解析
+    // LIFF 初始化與後端動態拉取
     // ==========================================
     async function initializeLiff() {
       try {
@@ -73,21 +89,43 @@
           return;
         }
 
-        // 解析 URL 參數中的 Trip_ID
         const urlParams = new URLSearchParams(window.location.search);
         currentTripId = urlParams.get('tripId');
         
-        // 抓取環境變數
         const context = liff.getContext();
         currentGroupId = context.groupId;
         currentUserProfile = await liff.getProfile();
 
-        if (!currentTripId || !currentGroupId) {
-          throw new Error("非法操作：查無旅程 ID 或不在群組內。");
+        if (!currentTripId || !currentGroupId) throw new Error("查無旅程 ID 或不在群組內。");
+
+        const statusLog = document.getElementById('statusLog');
+        statusLog.innerText = "⏳ 正在同步雲端最新匯率...";
+
+        try {
+          const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
+          const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+          const result = await res.json();
+
+          if (result.status === "success") {
+            // 1. 將雲端設定的精準匯率覆寫進本地矩陣中
+            RATE_MATRIX[result.currency] = result.rate;
+            
+            // 2. 自動將下拉選單切換至該趟旅程的主外幣 (例如：KRW)
+            document.getElementById('currencySelect').value = result.currency;
+            
+            // 3. 自動將匯率輸入框更新為該精準匯率
+            document.getElementById('rateInput').value = result.rate;
+            
+            document.getElementById('tripNameDisplay').innerText = `記一筆消費 [${result.tripName}]`;
+            statusLog.innerText = "✅ 雲端匯率同步完成";
+          } else {
+            throw new Error("API回傳失敗");
+          }
+        } catch (fetchErr) {
+          statusLog.innerText = "⚠️ 匯率同步失敗，已切換至離線預設矩陣";
+          statusLog.className = "text-xs text-yellow-600 font-bold";
         }
 
-        document.getElementById('statusLog').innerText = "✅ 基因鎖驗證成功，連線就緒";
-        document.getElementById('tripNameDisplay').innerText = "記一筆消費";
         document.getElementById('mainForm').style.display = 'block';
 
       } catch (err) {
@@ -96,9 +134,7 @@
       }
     }
 
-    // ==========================================
-    // 核心提交與通知邏輯 (Fetch & SendMessage)
-    // ==========================================
+    // 核心提交與通知邏輯 (與先前完全相同)
     async function submitExpense() {
       const btn = document.getElementById('submitBtn');
       const desc = document.getElementById('descInput').value;
@@ -106,53 +142,32 @@
       const currency = document.getElementById('currencySelect').value;
       const rate = document.getElementById('rateInput').value;
 
-      if(!desc || !amount) {
-        alert("請輸入項目與金額");
-        return;
-      }
+      if(!desc || !amount) return alert("請輸入項目與金額");
 
       btn.disabled = true;
       btn.innerText = "⏳ 寫入資料庫中...";
 
       const payload = {
-        action: "addExpense",
-        tripId: currentTripId,
-        groupId: currentGroupId,
-        payerUserId: currentUserProfile.userId,
-        description: desc,
-        rawAmount: parseFloat(amount),
-        currency: currency,
-        exchangeRate: parseFloat(rate),
-        splitMode: "EQUAL",
-        splitDetailString: "{}"
+        action: "addExpense", tripId: currentTripId, groupId: currentGroupId,
+        payerUserId: currentUserProfile.userId, description: desc,
+        rawAmount: parseFloat(amount), currency: currency, exchangeRate: parseFloat(rate),
+        splitMode: "EQUAL", splitDetailString: "{}"
       };
 
       try {
-        // 1. 打包 JSON 送往 GAS 大腦
-        const res = await fetch(GAS_WEB_APP_URL, {
-          method: 'POST',
-          body: JSON.stringify(payload)
-        });
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
-
         if (result.status === "success") {
-          // 2. 寫入成功後，發送無噪音通報至群組
-          const msgText = `📝 ${currentUserProfile.displayName} 已記帳：${desc} $${amount} ${currency}`;
-          await liff.sendMessages([{ type: 'text', text: msgText }]);
-          
-          // 3. 完美關閉網頁
+          await liff.sendMessages([{ type: 'text', text: `📝 ${currentUserProfile.displayName} 已記帳：${desc} $${amount} ${currency}` }]);
           liff.closeWindow();
-        } else {
-          throw new Error("寫入失敗");
-        }
+        } else throw new Error("寫入失敗");
       } catch (err) {
-        alert("網路錯誤或權限遭拒，請截圖聯繫管理員。");
+        alert("網路錯誤，請重新儲存。");
         btn.disabled = false;
         btn.innerText = "💾 重試儲存";
       }
     }
 
-    // 啟動系統
     initializeLiff();
   </script>
 </body>
