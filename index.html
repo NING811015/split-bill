@@ -26,7 +26,7 @@
 
   <div class="scroll-container" id="scrollArea">
     <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex items-center space-x-2">
-      <h1 class="text-lg font-bold text-gray-800" id="tripNameDisplay">讀取旅程中...</h1>
+      <h1 class="text-lg font-bold text-gray-800" id="tripNameDisplay">系統連線中...</h1>
       <div id="statusLight" class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
     </div>
 
@@ -267,7 +267,7 @@
           
           document.getElementById('currencySelect').value = result.currency;
           document.getElementById('rateDisplay').innerText = `(x ${CURRENT_RATE})`;
-          document.getElementById('tripNameDisplay').innerText = `[${result.tripName}]`;
+          document.getElementById('tripNameDisplay').innerText = `📍目前帳本 [${result.tripName}]`;
           MEMBER_LIST = result.members || [];
           
           // 連線成功：紅綠燈轉為穩定的綠燈
