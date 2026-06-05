@@ -25,36 +25,38 @@
   </div>
 
   <div class="scroll-container" id="scrollArea">
-    <div class="bg-white shadow-sm p-4 sticky top-0 z-10 flex items-center space-x-2">
-      <h1 class="text-lg font-bold text-gray-800" id="tripNameDisplay">系統連線中...</h1>
-      <div id="statusLight" class="w-3 h-3 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
+    <div class="bg-white shadow-sm p-3 sticky top-0 z-10 flex items-center space-x-2">
+      <h1 class="text-base font-bold text-gray-800" id="tripNameDisplay">系統連線中...</h1>
+      <div id="statusLight" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
     </div>
 
-    <div class="p-4 space-y-4" id="mainForm" style="display: none;">
+    <div class="p-3 space-y-3" id="mainForm" style="display: none;">
       <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">消費項目</label>
-        <input type="text" id="descInput" placeholder="" class="w-full bg-white border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <label class="block text-xs font-medium text-gray-600 mb-1">消費項目</label>
+        <input type="text" id="descInput" placeholder="" class="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm">
       </div>
 
-      <div class="flex space-x-3">
-        <div class="w-1/3">
-          <label class="block text-sm font-medium text-gray-600 mb-1">幣別 <span id="rateDisplay" class="text-[10px] text-blue-500 ml-1 font-bold"></span></label>
-          <select id="currencySelect" class="live-trigger w-full bg-white border border-gray-200 rounded-lg p-3 focus:outline-none border-gray-200 text-gray-700 font-bold">
+      <div class="flex space-x-2">
+        <div class="w-[45%]">
+          <label class="flex items-baseline text-xs font-medium text-gray-600 mb-1 whitespace-nowrap">
+            幣別 <span id="rateDisplay" class="text-[9px] text-blue-500 ml-1 font-bold"></span>
+          </label>
+          <select id="currencySelect" class="live-trigger w-full bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none border-gray-200 text-gray-700 font-bold text-sm h-[42px]">
             <option value="KRW">KRW</option>
             <option value="JPY">JPY</option>
             <option value="VND">VND</option>
             <option value="TWD">TWD</option>
           </select>
         </div>
-        <div class="w-2/3">
-          <label class="block text-sm font-medium text-gray-600 mb-1">總金額</label>
-          <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger w-full text-xl font-bold text-blue-600 bg-white border border-gray-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right">
+        <div class="w-[55%]">
+          <label class="block text-xs font-medium text-gray-600 mb-1 text-right">總金額</label>
+          <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger w-full text-lg font-bold text-blue-600 bg-white border border-gray-200 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 text-right h-[42px]">
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-600 mb-1">分帳模式</label>
-        <select id="splitModeSelect" class="live-trigger w-full bg-white border border-gray-200 rounded-lg p-3 focus:outline-none border-gray-200">
+        <label class="block text-xs font-medium text-gray-600 mb-1">分帳模式</label>
+        <select id="splitModeSelect" class="live-trigger w-full bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none border-gray-200 text-sm h-[42px]">
           <option value="EQUAL">👥 平均分攤</option>
           <option value="EXACT">🎯 拆分金額</option>
           <option value="SHARE">⚖️ 人頭份數</option>
@@ -63,17 +65,17 @@
       </div>
 
       <div class="bg-white border border-gray-100 rounded-xl shadow-sm overflow-hidden">
-        <div class="bg-blue-50/50 p-3 flex justify-between items-center border-b border-gray-100">
-          <span class="text-sm font-bold text-gray-700">分帳明細</span>
-          <span id="balanceStatus" class="text-xs font-bold text-gray-400">請輸入總金額</span>
+        <div class="bg-blue-50/50 p-2.5 flex justify-between items-center border-b border-gray-100">
+          <span class="text-xs font-bold text-gray-700">分帳明細</span>
+          <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
         </div>
-        <div id="splitDetailContainer" class="p-3 space-y-3 max-h-60 overflow-y-auto"></div>
+        <div id="splitDetailContainer" class="p-2.5 space-y-2 max-h-60 overflow-y-auto"></div>
       </div>
     </div>
   </div>
 
-  <div id="bottomBar" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
-    <button id="submitBtn" onclick="submitExpense()" disabled class="w-full bg-gray-300 text-white font-bold text-lg rounded-xl py-3 shadow-sm transition-colors duration-200">
+  <div id="bottomBar" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50">
+    <button id="submitBtn" onclick="submitExpense()" disabled class="w-full bg-gray-300 text-white font-bold text-base rounded-xl py-3 shadow-sm transition-colors duration-200">
       🔒 請先輸入有效金額
     </button>
   </div>
@@ -101,7 +103,6 @@
       }
     });
 
-    // 幣別變更時連動更新 UI 匯率標示 (直覺格式)
     document.getElementById('currencySelect').addEventListener('change', function(e) {
       CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0;
       document.getElementById('rateDisplay').innerText = `(1 ${e.target.value} = ${CURRENT_RATE} TWD)`;
@@ -118,20 +119,21 @@
 
       MEMBER_LIST.forEach(name => {
         const row = document.createElement('div');
-        row.className = "flex items-center justify-between bg-white border border-gray-50 p-2 rounded";
+        // 列高壓縮 py-1 px-2
+        row.className = "flex items-center justify-between bg-white border border-gray-50 py-1.5 px-2 rounded";
         let inputHtml = "";
         
         if (mode === "EQUAL") {
           inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-blue-600 rounded border-gray-300" checked></div>`;
         } 
         else if (mode === "EXACT") {
-          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded p-1 text-sm focus:outline-none"><span class="text-xs text-gray-500 ml-1 w-8">${currency}</span></div>`;
+          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded py-1 px-1.5 text-sm focus:outline-none"><span class="text-[10px] text-gray-500 ml-1 w-6">${currency}</span></div>`;
         } 
         else if (mode === "SHARE") {
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded p-1 text-sm focus:outline-none"><span class="text-xs text-gray-400 ml-1">份</span></div></div>`;
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-10 text-center bg-gray-50 border border-gray-200 rounded py-1 px-1.5 text-sm focus:outline-none"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`;
         } 
         else if (mode === "PERCENT") {
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded p-1 text-sm focus:outline-none"><span class="text-xs text-gray-400 ml-1">%</span></div></div>`;
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded py-1 px-1.5 text-sm focus:outline-none"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`;
         }
         row.innerHTML = `<span class="text-sm font-medium text-gray-700">${name}</span>${inputHtml}`;
         container.appendChild(row);
@@ -147,7 +149,7 @@
       const rows = document.getElementById('splitDetailContainer').children;
 
       btn.disabled = true;
-      btn.className = "w-full bg-gray-300 text-white font-bold text-lg rounded-xl py-3 shadow-sm transition-colors duration-200";
+      btn.className = "w-full bg-gray-300 text-white font-bold text-base rounded-xl py-3 shadow-sm transition-colors duration-200";
       
       if (rawAmount <= 0) {
         statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`;
@@ -266,9 +268,9 @@
           CURRENT_RATE = result.rate || 1.0;
           
           document.getElementById('currencySelect').value = result.currency;
-          // 初始化時顯示直覺匯率格式
+          // 加上 whitespace-nowrap 防禦的直覺格式
           document.getElementById('rateDisplay').innerText = `(1 ${result.currency} = ${CURRENT_RATE} TWD)`;
-          document.getElementById('tripNameDisplay').innerText = `📍目前帳本 [${result.tripName}]`;
+          document.getElementById('tripNameDisplay').innerText = `📍記帳 [${result.tripName}]`;
           MEMBER_LIST = result.members || [];
           
           statusLight.classList.replace('bg-yellow-400', 'bg-green-500');
