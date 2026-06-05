@@ -86,7 +86,7 @@
     const RATE_MATRIX = { "TWD": 1.0, "KRW": 0.024, "JPY": 0.22, "VND": 0.0013 };
     let MEMBER_LIST = []; 
     let GLOBAL_FEE_RATE = 0;
-    let CURRENT_RATE = 1.0; // 新增：全局動態匯率變數
+    let CURRENT_RATE = 1.0; 
 
     const bottomBar = document.getElementById('bottomBar');
     document.addEventListener('focusin', (e) => { if (e.target.tagName === 'INPUT') bottomBar.classList.add('btn-hidden'); });
@@ -101,10 +101,10 @@
       }
     });
 
-    // 幣別變更時連動更新 UI 匯率標示
+    // 幣別變更時連動更新 UI 匯率標示 (直覺格式)
     document.getElementById('currencySelect').addEventListener('change', function(e) {
       CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0;
-      document.getElementById('rateDisplay').innerText = `(x ${CURRENT_RATE})`;
+      document.getElementById('rateDisplay').innerText = `(1 ${e.target.value} = ${CURRENT_RATE} TWD)`;
       renderSplitDetail();
       calculateLivePreview();
     });
@@ -266,18 +266,17 @@
           CURRENT_RATE = result.rate || 1.0;
           
           document.getElementById('currencySelect').value = result.currency;
-          document.getElementById('rateDisplay').innerText = `(x ${CURRENT_RATE})`;
+          // 初始化時顯示直覺匯率格式
+          document.getElementById('rateDisplay').innerText = `(1 ${result.currency} = ${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerText = `📍目前帳本 [${result.tripName}]`;
           MEMBER_LIST = result.members || [];
           
-          // 連線成功：紅綠燈轉為穩定的綠燈
           statusLight.classList.replace('bg-yellow-400', 'bg-green-500');
           statusLight.classList.remove('animate-pulse');
           
           renderSplitDetail(); document.getElementById('mainForm').style.display = 'block';
         } else throw new Error("後端拒絕連線");
       } catch (err) {
-        // 連線失敗：紅綠燈轉紅燈
         statusLight.classList.replace('bg-yellow-400', 'bg-red-500');
         statusLight.classList.remove('animate-pulse');
         alert("❌ 系統阻斷：" + err.message);
@@ -291,7 +290,6 @@
       const currency = document.getElementById('currencySelect').value;
       const splitMode = document.getElementById('splitModeSelect').value;
 
-      // 使用鎖死的全局匯率計算台幣總額
       const totalTwd = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE));
       let splitDetailObj = {};
       
