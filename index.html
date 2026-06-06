@@ -170,7 +170,7 @@
       if (e.target.tagName === 'INPUT') { 
         bottomBar.classList.add('btn-hidden'); 
         appContainer.style.height = '100%'; 
-        setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+        setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 150);
       }
     });
     document.addEventListener('focusout', (e) => { 
