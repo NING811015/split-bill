@@ -137,7 +137,7 @@
     let IS_ARCHIVED = false;
     let RATE_MATRIX = {}; 
 
-    // --- 觸覺回饋 & Toast 通知模組 (V19.0) ---
+    // --- 觸覺回饋 & Toast 通知模組 ---
     const hapticVibrate = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
     
     const showToast = (message, type = 'info') => {
@@ -231,7 +231,8 @@
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); document.getElementById('confirmDeleteBtn').innerText = "確定撤銷"; document.getElementById('confirmDeleteBtn').disabled = false; }
     }
 
-    document.getElementById('mainForm').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
+    // 修補 1: mainForm 改為 view-add
+    document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
     document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 ${e.target.value} = ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
 
@@ -322,7 +323,8 @@
         if (!liff.isLoggedIn()) return liff.login();
 
         const urlParams = new URLSearchParams(window.location.search);
-        currentTripId = urlParams.get('tripId') || "null"; currentGroupId = liff.getContext().groupId || "ONLINE_TEST"; currentUserProfile = await liff.getProfile();
+        // 修補 2: 加上 ?. 防止非群組環境死鎖
+        currentTripId = urlParams.get('tripId') || "null"; currentGroupId = liff.getContext()?.groupId || "ONLINE_TEST"; currentUserProfile = await liff.getProfile();
 
         const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
