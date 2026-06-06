@@ -7,12 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    /* 強制鎖死全域捲軸，所有滾動交由內部容器負責 */
     html, body { height: 100%; overflow: hidden; background-color: #f9fafb; }
-    /* 扣除底部按鈕高度 (76px) */
     .app-container { height: calc(100% - 76px); display: flex; flex-direction: column; }
     .btn-hidden { display: none !important; }
-    .filter-cb:checked + div { background-color: #EEF4FF; color: #2563EB; border-color: #BFDBFE; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    
+    /* V20.3 優化：篩選器選中狀態的質感配色 */
+    .filter-cb:checked + div { background-color: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; font-weight: 700; box-shadow: inset 0 0 0 1px #BFDBFE; }
+    
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     .toast-enter { transform: translateY(-100%); opacity: 0; }
     .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -66,8 +67,8 @@
       <div id="dashboardArchived" class="space-y-4"></div>
     </div>
 
-   <div class="pt-3 px-3 pb-0 flex flex-col h-full overflow-hidden" id="view-add" style="display: none;">
-  <div class="h-full bg-white rounded-t-xl shadow-sm border-t border-l border-r border-gray-100 flex flex-col flex-grow overflow-hidden">
+    <div class="pt-3 px-3 pb-0 flex flex-col h-full overflow-hidden" id="view-add" style="display: none;">
+      <div class="h-full bg-white rounded-t-xl shadow-sm border-t border-l border-r border-gray-100 flex flex-col flex-grow overflow-hidden">
         
         <div class="p-3 space-y-3 flex-shrink-0">
           <div class="flex space-x-3">
@@ -119,13 +120,14 @@
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">📅 日期</span><div id="dateFilters" class="flex flex-wrap gap-2"></div></div>
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">💳 付款人</span><div id="payerFilters" class="flex flex-wrap gap-2"></div></div>
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">🛍️ 分攤人</span><div id="splitterFilters" class="flex flex-wrap gap-2"></div></div>
-      </div>
-      <div class="p-3 flex-grow overflow-y-auto space-y-3 relative z-0">
-        <div class="bg-gray-800 text-white rounded-xl p-3 flex justify-between items-center sticky top-0 z-20 shadow-md bg-opacity-95 backdrop-blur">
-          <span class="text-xs font-medium text-gray-300">加總 (約 TWD)</span>
-          <span id="filteredTotalTwd" class="text-lg font-bold font-mono tabular-nums tracking-tight">0</span>
+        
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-3 flex justify-between items-center mt-2 shadow-sm">
+          <span class="text-xs font-bold text-blue-800">條件加總</span>
+          <span class="text-lg font-bold text-blue-600 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[11px] font-sans text-blue-400">TWD</span></span>
         </div>
-        <div id="historyListContainer" class="space-y-3 pb-4"></div>
+      </div>
+      <div class="p-3 flex-grow overflow-y-auto relative z-0">
+        <div id="historyListContainer" class="space-y-2 pb-4"></div>
       </div>
     </div>
   </div>
@@ -182,13 +184,15 @@
 
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
+    // V20.3 篩選器改為方圓角 (rounded-md)
     function initHistoryFilters() {
       const uniqueDates = [...new Set(ALL_EXPENSES.map(e => e.date))].sort();
-      document.getElementById('dateFilters').innerHTML = uniqueDates.map(d => `<label class="relative cursor-pointer"><input type="checkbox" value="${d}" class="filter-cb filter-date hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-xl transition-colors active:scale-95 transform">${d.slice(5)}</div></label>`).join('');
-      document.getElementById('payerFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-payer hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-xl transition-colors active:scale-95 transform">${m}</div></label>`).join('');
-      document.getElementById('splitterFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-splitter hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-xl transition-colors active:scale-95 transform">${m}</div></label>`).join('');
+      document.getElementById('dateFilters').innerHTML = uniqueDates.map(d => `<label class="relative cursor-pointer"><input type="checkbox" value="${d}" class="filter-cb filter-date hidden" checked onchange="renderHistory()"><div class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-500 text-[11px] rounded-md transition-colors active:scale-95 transform">${d.slice(5)}</div></label>`).join('');
+      document.getElementById('payerFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-payer hidden" checked onchange="renderHistory()"><div class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-500 text-[11px] rounded-md transition-colors active:scale-95 transform">${m}</div></label>`).join('');
+      document.getElementById('splitterFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-splitter hidden" checked onchange="renderHistory()"><div class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-500 text-[11px] rounded-md transition-colors active:scale-95 transform">${m}</div></label>`).join('');
     }
 
+    // V20.3 明細卡片極限壓縮佈局
     function renderHistory() {
       const selectedDates = Array.from(document.querySelectorAll('.filter-date:checked')).map(cb => cb.value);
       const selectedPayers = Array.from(document.querySelectorAll('.filter-payer:checked')).map(cb => cb.value);
@@ -204,9 +208,27 @@
         if (inDate && inPayer && inSplitter) {
           totalTwdSum += exp.twdAmount;
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(', ');
-          htmlOutput += `<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 relative hover:shadow-md transition-shadow"><div class="flex justify-between items-start mb-2"><div><span class="text-[10px] font-bold text-gray-400 tracking-wider">${exp.date}</span><h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4></div>`;
-          if (!IS_ARCHIVED) htmlOutput += `<button onclick="promptDelete('${exp.id}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="text-red-400 hover:text-red-600 bg-red-50 p-1.5 rounded-lg text-xs font-bold active:bg-red-100 transition-colors">🗑️</button>`;
-          htmlOutput += `</div><div class="flex justify-between items-end"><div class="text-xs text-gray-500">付款：<span class="font-bold text-gray-700">${exp.payer}</span><br><span class="text-[10px] text-gray-400 block mt-1 line-clamp-1 w-40">${splitStr}</span></div><div class="text-right"><div class="text-base font-bold text-blue-600 font-mono tabular-nums tracking-tight">${exp.rawAmount.toLocaleString()} <span class="text-xs text-blue-400 font-sans tracking-normal">${exp.currency}</span></div><div class="text-[10px] text-gray-400 font-mono tabular-nums tracking-tight">約 $${exp.twdAmount.toLocaleString()} TWD</div></div></div></div>`;
+          
+          htmlOutput += `
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow">
+              <div class="flex justify-between items-center pr-6">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${exp.date.slice(5)}</span>
+                  <h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4>
+                </div>
+                <div class="text-sm font-bold text-blue-600 font-mono tabular-nums">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-sans">${exp.currency}</span></div>
+              </div>
+              
+              <div class="flex justify-between items-center pr-6">
+                <div class="text-[11px] text-gray-500 truncate w-[70%]">
+                  <span class="font-bold text-gray-700">${exp.payer}</span>墊款 <span class="text-gray-300 mx-0.5">|</span> <span class="text-gray-400">${splitStr}</span>
+                </div>
+                <div class="text-[10px] text-gray-400 font-mono tabular-nums">約 ${exp.twdAmount.toLocaleString()} TWD</div>
+              </div>
+              
+              ${!IS_ARCHIVED ? `<button onclick="promptDelete('${exp.id}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-300 hover:text-red-500 p-1.5 active:bg-red-50 rounded-lg transition-colors">🗑️</button>` : ''}
+            </div>
+          `;
         }
       });
       if (htmlOutput === "") htmlOutput = `<div class="text-center text-sm text-gray-400 py-6">查無交集條件之帳目</div>`;
@@ -247,14 +269,12 @@
       const container = document.getElementById('splitDetailContainer'); container.innerHTML = ""; if (MEMBER_LIST.length === 0) return;
 
       MEMBER_LIST.forEach(name => {
-        // [修改核心] 強制綁死 h-10，讓每列精準等於 40px
         const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 h-10 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
         if (mode === "EQUAL") { 
           row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-blue-50'); 
           inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 pointer-events-none" checked></div>`; 
         } 
         else if (mode === "EXACT") { 
-          // 輸入框縮小至 h-7，完美融入 40px 的行高
           inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
         } 
         else if (mode === "SHARE") { 
