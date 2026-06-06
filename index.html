@@ -7,12 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
+    /* 強制鎖死全域捲軸，所有滾動交由內部容器負責 */
     html, body { height: 100%; overflow: hidden; background-color: #f9fafb; }
+    /* 扣除底部按鈕高度 (76px) */
     .app-container { height: calc(100% - 76px); display: flex; flex-direction: column; }
     .btn-hidden { display: none !important; }
     .filter-cb:checked + div { background-color: #EEF4FF; color: #2563EB; border-color: #BFDBFE; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
-    /* Toast 進場/退場動畫 */
     .toast-enter { transform: translateY(-100%); opacity: 0; }
     .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .toast-exit { transform: translateY(-20%); opacity: 0; transition: all 0.2s ease-in; }
@@ -58,17 +59,17 @@
       </div>
     </div>
 
-    <div class="p-4 flex flex-col flex-grow min-h-0 overflow-y-auto bg-gray-50/80" id="view-dashboard" style="display: none;">
+    <div class="p-4 flex flex-col h-full overflow-y-auto bg-gray-50/80" id="view-dashboard" style="display: none;">
       <h2 class="text-lg font-bold text-gray-800 mb-4">🚀 我的旅程總覽</h2>
       <div id="dashboardActive" class="space-y-4 mb-6"></div>
       <h2 class="text-sm font-bold text-gray-500 mb-3 border-t border-gray-200 pt-4">🔒 歷史封存</h2>
       <div id="dashboardArchived" class="space-y-4"></div>
     </div>
 
-    <div class="p-3 flex flex-col flex-grow min-h-0 overflow-y-auto" id="view-add" style="display: none;">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col flex-shrink-0 overflow-hidden">
+    <div class="p-3 flex flex-col h-full overflow-hidden" id="view-add" style="display: none;">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col flex-grow overflow-hidden">
         
-        <div class="p-4 space-y-4">
+        <div class="p-3 space-y-3 flex-shrink-0">
           <div class="flex space-x-3">
             <div class="w-[40%]">
               <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
@@ -91,7 +92,7 @@
               <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
             </div>
           </div>
-          <div class="border-t border-gray-50 pt-3">
+          <div class="border-t border-gray-50 pt-2.5 mt-1">
             <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
             <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
               <button type="button" class="split-mode-btn active" data-mode="EQUAL">👥平均</button>
@@ -103,21 +104,17 @@
           </div>
         </div>
 
-        <div class="bg-gray-50/50 border-t border-gray-100 p-4 pt-3 flex-grow">
-          <div class="flex justify-between items-center mb-2.5">
+        <div class="bg-gray-50/50 border-t border-gray-100 flex flex-col flex-grow min-h-0">
+          <div class="p-3 pb-2 flex justify-between items-center flex-shrink-0">
             <span class="text-xs font-bold text-gray-600">分帳明細預覽</span>
             <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
           </div>
-          <div id="progressBarWrap" class="w-full h-1 bg-gray-200 rounded-full mb-3 hidden">
-            <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-300 w-0"></div>
-          </div>
-          <div id="splitDetailContainer" class="space-y-2"></div>
+          <div id="splitDetailContainer" class="px-3 pb-3 space-y-1.5 overflow-y-auto flex-grow"></div>
         </div>
       </div>
-      <div class="h-4 flex-shrink-0"></div>
     </div>
 
-    <div class="flex flex-col flex-grow min-h-0 bg-gray-50" id="view-history" style="display: none;">
+    <div class="flex flex-col h-full overflow-hidden bg-gray-50" id="view-history" style="display: none;">
       <div class="p-3 bg-white shadow-sm z-10 flex-shrink-0 space-y-3">
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">📅 日期</span><div id="dateFilters" class="flex flex-wrap gap-2"></div></div>
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">💳 付款人</span><div id="payerFilters" class="flex flex-wrap gap-2"></div></div>
@@ -248,16 +245,24 @@
     function renderSplitDetailAdd() {
       const mode = document.getElementById('splitModeSelect').value; const currency = document.getElementById('currencySelect').value;
       const container = document.getElementById('splitDetailContainer'); container.innerHTML = ""; if (MEMBER_LIST.length === 0) return;
-      
-      const pBarWrap = document.getElementById('progressBarWrap');
-      if(mode === 'EXACT' || mode === 'PERCENT') { pBarWrap.classList.remove('hidden'); } else { pBarWrap.classList.add('hidden'); }
 
       MEMBER_LIST.forEach(name => {
-        const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 py-1.5 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
-        if (mode === "EQUAL") { row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-blue-50'); inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 pointer-events-none" checked></div>`; } 
-        else if (mode === "EXACT") { inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-24 text-right bg-gray-50 border border-gray-200 rounded py-1 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; } 
-        else if (mode === "SHARE") { inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded py-1 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; } 
-        else if (mode === "PERCENT") { inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-14 text-right bg-gray-50 border border-gray-200 rounded py-1 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; }
+        // [修改核心] 強制綁死 h-10，讓每列精準等於 40px
+        const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 h-10 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
+        if (mode === "EQUAL") { 
+          row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-blue-50'); 
+          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 pointer-events-none" checked></div>`; 
+        } 
+        else if (mode === "EXACT") { 
+          // 輸入框縮小至 h-7，完美融入 40px 的行高
+          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
+        } 
+        else if (mode === "SHARE") { 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
+        } 
+        else if (mode === "PERCENT") { 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
+        }
         row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none">${name}</span>${inputHtml}`; container.appendChild(row);
       });
     }
@@ -265,13 +270,11 @@
     function calculateLivePreview() {
       const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0; const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
-      const pBar = document.getElementById('progressBar');
       
       btn.disabled = true; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
       
       if (rawAmount <= 0) { 
         statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`; btn.innerText = "🔒 請先輸入有效金額"; 
-        pBar.style.width = '0%';
         Array.from(rows).forEach(row => { const res = row.querySelector('.live-result'); if(res) res.innerText = ""; }); 
         return; 
       }
@@ -284,24 +287,21 @@
       } 
       else if (mode === "EXACT") {
         let currentForeignSum = 0; document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value) || 0)); let diff = rawAmount - currentForeignSum;
-        let pct = Math.min((currentForeignSum / rawAmount) * 100, 100); pBar.style.width = `${pct}%`;
         
-        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-green-600">✅ 帳目平衡</span>`; pBar.className = "h-full bg-green-500 transition-all duration-300"; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500'); } 
-        else if (diff > 0) { statusBar.innerHTML = `<span class="text-blue-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; pBar.className = "h-full bg-blue-400 transition-all duration-300"; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
-        else { statusBar.innerHTML = `<span class="text-red-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; pBar.className = "h-full bg-red-500 transition-all duration-300"; pBar.style.width = '100%'; btn.innerText = `🔒 金額超出`; }
+        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-green-600">✅ 帳目平衡</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500'); } 
+        else if (diff > 0) { statusBar.innerHTML = `<span class="text-blue-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
+        else { statusBar.innerHTML = `<span class="text-red-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 金額超出`; }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
         let totalMetric = 0; document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value) || 0));
         if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-red-500">❌ 總份數為 0</span>`; return; }
         
         if (mode === "PERCENT") {
-            let pct = Math.min(totalMetric, 100); pBar.style.width = `${pct}%`;
             if (Math.abs(totalMetric - 100) > 0.01) { 
-                statusBar.innerHTML = `<span class="text-blue-500">目前計 ${totalMetric}%</span>`; pBar.className = "h-full bg-blue-400 transition-all duration-300"; btn.innerText = `🔒 比例須等於 100%`; 
-                if(totalMetric > 100) { statusBar.innerHTML = `<span class="text-red-500">❌ 超出 ${totalMetric}%</span>`; pBar.className = "h-full bg-red-500 transition-all duration-300"; pBar.style.width = '100%';}
+                statusBar.innerHTML = `<span class="text-blue-500">目前計 ${totalMetric}%</span>`; btn.innerText = `🔒 比例須等於 100%`; 
+                if(totalMetric > 100) { statusBar.innerHTML = `<span class="text-red-500">❌ 超出 ${totalMetric}%</span>`; }
                 return; 
             }
-            pBar.className = "h-full bg-green-500 transition-all duration-300";
         }
 
         let calculatedSum = 0; let inputs = document.querySelectorAll('.split-input');
