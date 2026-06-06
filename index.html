@@ -46,7 +46,7 @@
   <div class="app-container" id="scrollArea">
     <div class="bg-white shadow-sm flex flex-col sticky top-0 z-10 flex-shrink-0">
       <div class="p-3 flex items-center justify-between">
-        <h1 class="text-base font-bold text-gray-800" id="tripNameDisplay">系統連線中...</h1>
+        <h1 class="text-base font-bold text-gray-800" id="tripNameDisplay">滴滴連線中...</h1>
         <div id="statusLight" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
       </div>
       <div class="flex text-sm font-bold border-t border-gray-100 bg-gray-50/50" id="tabContainer" style="display: none;">
@@ -66,12 +66,12 @@
       <div class="space-y-4 flex-shrink-0 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div class="flex space-x-3">
           <div class="w-[35%]">
-            <label class="block text-xs font-medium text-gray-500 mb-1">先墊款人</label>
+            <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
             <select id="payerSelect" class="w-full bg-blue-50 border border-blue-100 rounded-lg py-2.5 px-2 focus:outline-none text-blue-700 font-bold text-sm truncate shadow-inner"></select>
           </div>
           <div class="w-[65%]">
             <label class="block text-xs font-medium text-gray-500 mb-1">消費項目</label>
-            <input type="text" id="descInput" placeholder="例: 晚餐" class="w-full bg-gray-50 border border-gray-100 rounded-lg py-2.5 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-base shadow-inner transition-all">
+            <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg py-2.5 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-base shadow-inner transition-all">
           </div>
         </div>
         <div class="flex space-x-3">
@@ -108,13 +108,13 @@
 
     <div class="flex flex-col flex-grow min-h-0 bg-gray-50" id="view-history" style="display: none;">
       <div class="p-3 bg-white shadow-sm z-10 flex-shrink-0 space-y-3">
-        <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">📅 日期篩選</span><div id="dateFilters" class="flex flex-wrap gap-2"></div></div>
+        <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">📅 日期</span><div id="dateFilters" class="flex flex-wrap gap-2"></div></div>
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">💳 付款人</span><div id="payerFilters" class="flex flex-wrap gap-2"></div></div>
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">🛍️ 分攤人</span><div id="splitterFilters" class="flex flex-wrap gap-2"></div></div>
       </div>
       <div class="p-3 flex-grow overflow-y-auto space-y-3 relative z-0">
         <div class="bg-gray-800 text-white rounded-xl p-3 flex justify-between items-center sticky top-0 z-20 shadow-md bg-opacity-95 backdrop-blur">
-          <span class="text-xs font-medium text-gray-300">條件加總 (約 TWD)</span>
+          <span class="text-xs font-medium text-gray-300">加總 (約 TWD)</span>
           <span id="filteredTotalTwd" class="text-lg font-bold font-mono tabular-nums tracking-tight">0</span>
         </div>
         <div id="historyListContainer" class="space-y-3 pb-4"></div>
