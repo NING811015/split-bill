@@ -90,11 +90,9 @@
             <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg h-10  px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
           </div>
         </div>
-      </div>
+     <div class="border-t border-gray-100 pt-3">
 
-<div>
-
-  <label class="block text-xs font-medium text-gray-500 mb-1">
+  <label class="block text-xs font-medium text-gray-500 mb-2">
     分帳模式
   </label>
 
@@ -137,6 +135,7 @@
     id="splitModeSelect"
     value="EQUAL">
 
+</div>
 </div>
       
       <div class="bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col mt-4 flex-shrink-0 max-h-[310px] relative overflow-hidden">
@@ -424,7 +423,11 @@
           curSelect.value = result.defaultCurrency; 
 
           document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
-          document.getElementById('tripNameDisplay').innerText = `📍${IS_ARCHIVED ? '歷史封存' : '目前帳本'} [${result.tripName}]`;
+          document.getElementById('tripNameDisplay').innerHTML =
+  `${IS_ARCHIVED ? '📦' : '✈️'} ${result.tripName}
+   <span class="text-[11px] text-gray-400 font-normal ml-1">
+     ${result.startDate} ~ ${result.endDate}
+   </span>`;
           
           document.getElementById('tabContainer').style.display = 'flex';
           initHistoryFilters(); renderSplitDetailAdd(); 
