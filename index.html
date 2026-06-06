@@ -16,10 +16,9 @@
     .toast-enter { transform: translateY(-100%); opacity: 0; }
     .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .toast-exit { transform: translateY(-20%); opacity: 0; transition: all 0.2s ease-in; }
-    .split-mode-btn{ height:40px;  background:#F9FAFB;  border:1px solid #E5E7EB;
-  border-radius:10px;  font-size:12px;  font-weight:600;  color:#6B7280; transition:all .15s; }
-    .split-mode-btn.active{  background:#EEF4FF;  border-color:#3B82F6;  color:#2563EB;}
-    .split-mode-btn:active{  transform:scale(.97);}
+    .split-mode-btn { height:40px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; font-size:12px; font-weight:600; color:#6B7280; transition:all .15s; }
+    .split-mode-btn.active { background:#EEF4FF; border-color:#3B82F6; color:#2563EB;}
+    .split-mode-btn:active { transform:scale(.97);}
   </style>
 </head>
 <body class="text-gray-800 font-sans relative">
@@ -67,87 +66,55 @@
     </div>
 
     <div class="p-3 flex flex-col flex-grow min-h-0 overflow-y-auto" id="view-add" style="display: none;">
-      <div class="space-y-4 flex-shrink-0 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div class="flex space-x-3">
-          <div class="w-[40%]">
-            <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
-            <select id="payerSelect" class="w-full bg-blue-50 border border-blue-100 rounded-lg h-10 px-2 focus:outline-none text-blue-700 font-bold text-sm truncate shadow-inner"></select>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col flex-shrink-0 overflow-hidden">
+        
+        <div class="p-4 space-y-4">
+          <div class="flex space-x-3">
+            <div class="w-[40%]">
+              <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
+              <select id="payerSelect" class="w-full bg-blue-50 border border-blue-100 rounded-lg h-10 px-2 focus:outline-none text-blue-700 font-bold text-sm truncate shadow-inner"></select>
+            </div>
+            <div class="w-[60%]">
+              <label class="block text-xs font-medium text-gray-500 mb-1">消費項目</label>
+              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-base shadow-inner transition-all">
+            </div>
           </div>
-          <div class="w-[60%]">
-            <label class="block text-xs font-medium text-gray-500 mb-1">消費項目</label>
-            <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10  px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-base shadow-inner transition-all">
+          <div class="flex space-x-3">
+            <div class="w-[40%]">
+              <label class="flex items-baseline text-xs font-medium text-gray-500 mb-1 whitespace-nowrap">
+                幣別 <span id="rateDisplay" class="text-[9px] text-blue-500 ml-1 font-bold"></span>
+              </label>
+              <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-sm shadow-inner"></select>
+            </div>
+            <div class="w-[60%]">
+              <label class="block text-xs font-medium text-gray-500 mb-1">總金額</label>
+              <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
+            </div>
+          </div>
+          <div class="border-t border-gray-50 pt-3">
+            <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
+            <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
+              <button type="button" class="split-mode-btn active" data-mode="EQUAL">👥平均</button>
+              <button type="button" class="split-mode-btn" data-mode="EXACT">🎯拆分</button>
+              <button type="button" class="split-mode-btn" data-mode="SHARE">⚖️份數</button>
+              <button type="button" class="split-mode-btn" data-mode="PERCENT">📈比例</button>
+            </div>
+            <input type="hidden" id="splitModeSelect" value="EQUAL">
           </div>
         </div>
-        <div class="flex space-x-3">
-          <div class="w-[40%]">
-            <label class="flex items-baseline text-xs font-medium text-gray-500 mb-1 whitespace-nowrap">
-              幣別 <span id="rateDisplay" class="text-[9px] text-blue-500 ml-1 font-bold"></span>
-            </label>
-            <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-sm shadow-inner"></select>
+
+        <div class="bg-gray-50/50 border-t border-gray-100 p-4 pt-3 flex-grow">
+          <div class="flex justify-between items-center mb-2.5">
+            <span class="text-xs font-bold text-gray-600">分帳明細預覽</span>
+            <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
           </div>
-          <div class="w-[60%]">
-            <label class="block text-xs font-medium text-gray-500 mb-1 ">總金額</label>
-            <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg h-10  px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
+          <div id="progressBarWrap" class="w-full h-1 bg-gray-200 rounded-full mb-3 hidden">
+            <div id="progressBar" class="h-full bg-blue-500 rounded-full transition-all duration-300 w-0"></div>
           </div>
+          <div id="splitDetailContainer" class="space-y-2"></div>
         </div>
-     <div class="border-t border-gray-100 pt-3">
-
-  <label class="block text-xs font-medium text-gray-500 mb-2">
-    分帳模式
-  </label>
-
-  <div
-    id="splitModeButtons"
-    class="grid grid-cols-4 gap-1">
-
-    <button
-      type="button"
-      class="split-mode-btn active"
-      data-mode="EQUAL">
-      👥平均
-    </button>
-
-    <button
-      type="button"
-      class="split-mode-btn"
-      data-mode="EXACT">
-      🎯拆分
-    </button>
-
-    <button
-      type="button"
-      class="split-mode-btn"
-      data-mode="SHARE">
-      ⚖️份數
-    </button>
-
-    <button
-      type="button"
-      class="split-mode-btn"
-      data-mode="PERCENT">
-      📈比例
-    </button>
-
-  </div>
-
-  <input
-    type="hidden"
-    id="splitModeSelect"
-    value="EQUAL">
-
-</div>
-</div>
-      
-      <div class="bg-white border border-gray-100 rounded-xl shadow-sm flex flex-col mt-1 flex-shrink-0 max-h-[350px] relative overflow-hidden">
-        <div class="bg-gray-50 p-2.5 flex justify-between items-center border-b border-gray-100 flex-shrink-0 z-10">
-          <span class="text-xs font-bold text-gray-600">分帳明細</span>
-          <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
-        </div>
-        <div id="progressBarWrap" class="w-full h-0.5 bg-gray-100 z-10 hidden">
-          <div id="progressBar" class="h-full bg-blue-500 transition-all duration-300 w-0"></div>
-        </div>
-        <div id="splitDetailContainer" class="p-2 space-y-2 overflow-y-auto z-0"></div>
       </div>
+      <div class="h-4 flex-shrink-0"></div>
     </div>
 
     <div class="flex flex-col flex-grow min-h-0 bg-gray-50" id="view-history" style="display: none;">
@@ -181,7 +148,6 @@
     let IS_ARCHIVED = false;
     let RATE_MATRIX = {}; 
 
-    // --- 觸覺回饋 & Toast 通知模組 ---
     const hapticVibrate = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
     
     const showToast = (message, type = 'info') => {
@@ -275,7 +241,6 @@
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); document.getElementById('confirmDeleteBtn').innerText = "確定撤銷"; document.getElementById('confirmDeleteBtn').disabled = false; }
     }
 
-    // 修補 1: mainForm 改為 view-add
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
     document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
@@ -367,7 +332,6 @@
         if (!liff.isLoggedIn()) return liff.login();
 
         const urlParams = new URLSearchParams(window.location.search);
-        // 修補 2: 加上 ?. 防止非群組環境死鎖
         currentTripId = urlParams.get('tripId') || "null"; currentGroupId = liff.getContext()?.groupId || "ONLINE_TEST"; currentUserProfile = await liff.getProfile();
 
         const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
@@ -413,7 +377,6 @@
           CURRENT_RATE = RATE_MATRIX[result.defaultCurrency] || 1.0;
           MEMBER_LIST = result.members || []; ALL_EXPENSES = result.expenses || []; 
 
-          // 綁定付款人清單
           const payerSel = document.getElementById('payerSelect');
           payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">${m}</option>`).join('');
           if (result.suggestedName && MEMBER_LIST.includes(result.suggestedName)) { payerSel.value = result.suggestedName; }
@@ -424,10 +387,10 @@
 
           document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerHTML =
-  `${IS_ARCHIVED ? '📦' : '✈️'} ${result.tripName}
-   <span class="text-[11px] text-gray-400 font-normal ml-1">
-     ${result.startDate} ~ ${result.endDate}
-   </span>`;
+            `${IS_ARCHIVED ? '📦' : '✈️'} ${result.tripName}
+             <span class="text-[11px] text-gray-400 font-normal ml-1">
+               ${result.startDate} ~ ${result.endDate}
+             </span>`;
           
           document.getElementById('tabContainer').style.display = 'flex';
           initHistoryFilters(); renderSplitDetailAdd(); 
@@ -463,20 +426,17 @@
         } else throw new Error();
       } catch (err) { showToast("網路通訊錯誤，請重試", "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; }
     }
-document.addEventListener('click',function(e){ const btn =      e.target.closest('.split-mode-btn');if(!btn) return;
-hapticVibrate(20);document.querySelectorAll('.split-mode-btn' ) .forEach(b =>    b.classList.remove('active'));
 
-    btn.classList.add( 'active');
-
-    document.getElementById('splitModeSelect')
-      .value =
-      btn.dataset.mode;
-
-    renderSplitDetailAdd();
-    calculateLivePreview();
-
-  }
-);
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.split-mode-btn');
+      if(!btn) return;
+      hapticVibrate(20);
+      document.querySelectorAll('.split-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('splitModeSelect').value = btn.dataset.mode;
+      renderSplitDetailAdd();
+      calculateLivePreview();
+    });
 
     initializeLiff();
   </script>
