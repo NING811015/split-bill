@@ -10,10 +10,7 @@
     html, body { height: 100%; overflow: hidden; background-color: #f9fafb; }
     .app-container { height: calc(100% - 76px); display: flex; flex-direction: column; }
     .btn-hidden { display: none !important; }
-    
-    /* V20.3 優化：篩選器選中狀態的質感配色 */
     .filter-cb:checked + div { background-color: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; font-weight: 700; box-shadow: inset 0 0 0 1px #BFDBFE; }
-    
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     .toast-enter { transform: translateY(-100%); opacity: 0; }
     .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -40,7 +37,7 @@
   <div id="deleteModal" class="absolute inset-0 z-[90] modal-overlay flex flex-col justify-center items-center p-6 hidden">
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 transform transition-all">
       <h3 class="text-lg font-bold text-red-600 flex items-center">⚠️ 確認撤銷帳目？</h3>
-      <p class="text-sm text-gray-600 font-mono tabular-nums tracking-tight" id="deleteTargetDesc"></p>
+      <p class="text-sm text-gray-600 font-mono tabular-nums tracking-tight whitespace-pre-line" id="deleteTargetDesc"></p>
       <div class="flex space-x-3 pt-2">
         <button onclick="closeDeleteModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">取消</button>
         <button id="confirmDeleteBtn" class="w-1/2 bg-red-500 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-red-600 transition-transform active:scale-[0.98]">確定撤銷</button>
@@ -55,8 +52,8 @@
         <div id="statusLight" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
       </div>
       <div class="flex text-sm font-bold border-t border-gray-100 bg-gray-50/50" id="tabContainer" style="display: none;">
-        <div id="tab-add" onclick="switchTab('add')" class="w-1/2 text-center py-2.5 text-blue-600 border-b-2 border-blue-600 cursor-pointer transition-colors">✏️ 新增消費</div>
-        <div id="tab-history" onclick="switchTab('history')" class="w-1/2 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors">📜 消費明細</div>
+        <div id="tab-add" onclick="switchTab('add')" class="w-1/2 text-center py-2.5 text-blue-600 border-b-2 border-blue-600 cursor-pointer transition-colors">✏️ 記一筆帳</div>
+        <div id="tab-history" onclick="switchTab('history')" class="w-1/2 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors">📜 記帳明細</div>
       </div>
     </div>
 
@@ -69,7 +66,6 @@
 
     <div class="pt-3 px-3 pb-0 flex flex-col h-full overflow-hidden" id="view-add" style="display: none;">
       <div class="h-full bg-white rounded-t-xl shadow-sm border-t border-l border-r border-gray-100 flex flex-col flex-grow overflow-hidden">
-        
         <div class="p-3 space-y-3 flex-shrink-0">
           <div class="flex space-x-3">
             <div class="w-[40%]">
@@ -110,7 +106,7 @@
             <span class="text-xs font-bold text-gray-600">分帳明細預覽</span>
             <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
           </div>
-          <div id="splitDetailContainer" class="px-3 pb-3 space-y-1.5 overflow-y-auto flex-grow"></div>
+          <div id="splitDetailContainer" class="px-3 pb-24 space-y-1.5 overflow-y-auto flex-grow"></div>
         </div>
       </div>
     </div>
@@ -121,7 +117,7 @@
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">💳 付款人</span><div id="payerFilters" class="flex flex-wrap gap-2"></div></div>
         <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">🛍️ 分攤人</span><div id="splitterFilters" class="flex flex-wrap gap-2"></div></div>
         
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-3 flex justify-between items-center mt-2 shadow-sm">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg py-1.5 px-3 flex justify-between items-center shadow-sm">
           <span class="text-xs font-bold text-blue-800">條件加總</span>
           <span class="text-lg font-bold text-blue-600 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[11px] font-sans text-blue-400">TWD</span></span>
         </div>
@@ -168,8 +164,23 @@
 
     const bottomBar = document.getElementById('bottomBar');
     const appContainer = document.querySelector('.app-container');
-    document.addEventListener('focusin', (e) => { if (e.target.tagName === 'INPUT') { bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; }});
-    document.addEventListener('focusout', (e) => { setTimeout(() => { if(document.activeElement.tagName !== 'INPUT' && document.getElementById('view-add').style.display !== 'none') { bottomBar.classList.remove('btn-hidden'); appContainer.style.height = 'calc(100% - 76px)'; } }, 100);});
+    
+    // V20.4 視圖導航：確保輸入框聚焦時被滾動至可視區域
+    document.addEventListener('focusin', (e) => { 
+      if (e.target.tagName === 'INPUT') { 
+        bottomBar.classList.add('btn-hidden'); 
+        appContainer.style.height = '100%'; 
+        setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
+      }
+    });
+    document.addEventListener('focusout', (e) => { 
+      setTimeout(() => { 
+        if(document.activeElement.tagName !== 'INPUT' && document.getElementById('view-add').style.display !== 'none') { 
+          bottomBar.classList.remove('btn-hidden'); 
+          appContainer.style.height = 'calc(100% - 76px)'; 
+        } 
+      }, 100);
+    });
 
     function switchTab(tab) {
       if (IS_ARCHIVED && tab === 'add') return;
@@ -184,7 +195,6 @@
 
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
-    // V20.3 篩選器改為方圓角 (rounded-md)
     function initHistoryFilters() {
       const uniqueDates = [...new Set(ALL_EXPENSES.map(e => e.date))].sort();
       document.getElementById('dateFilters').innerHTML = uniqueDates.map(d => `<label class="relative cursor-pointer"><input type="checkbox" value="${d}" class="filter-cb filter-date hidden" checked onchange="renderHistory()"><div class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-500 text-[11px] rounded-md transition-colors active:scale-95 transform">${d.slice(5)}</div></label>`).join('');
@@ -192,7 +202,6 @@
       document.getElementById('splitterFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-splitter hidden" checked onchange="renderHistory()"><div class="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-500 text-[11px] rounded-md transition-colors active:scale-95 transform">${m}</div></label>`).join('');
     }
 
-    // V20.3 明細卡片極限壓縮佈局
     function renderHistory() {
       const selectedDates = Array.from(document.querySelectorAll('.filter-date:checked')).map(cb => cb.value);
       const selectedPayers = Array.from(document.querySelectorAll('.filter-payer:checked')).map(cb => cb.value);
@@ -209,24 +218,24 @@
           totalTwdSum += exp.twdAmount;
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(', ');
           
+          // V20.4 優化：拔除 truncate，改用 whitespace-normal 讓名單自然換行
           htmlOutput += `
             <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow">
-              <div class="flex justify-between items-center pr-6">
+              <div class="flex justify-between items-start pr-8">
                 <div class="flex items-center gap-2">
                   <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${exp.date.slice(5)}</span>
                   <h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4>
                 </div>
-                <div class="text-sm font-bold text-blue-600 font-mono tabular-nums">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-sans">${exp.currency}</span></div>
+                <div class="text-sm font-bold text-blue-600 font-mono tabular-nums whitespace-nowrap">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-sans">${exp.currency}</span></div>
               </div>
-              
-              <div class="flex justify-between items-center pr-6">
-                <div class="text-[11px] text-gray-500 truncate w-[70%]">
-                  <span class="font-bold text-gray-700">${exp.payer}</span>墊款 <span class="text-gray-300 mx-0.5">|</span> <span class="text-gray-400">${splitStr}</span>
+              <div class="flex justify-between items-end pr-8 mt-1">
+                <div class="text-[11px] text-gray-500 whitespace-normal break-words leading-relaxed">
+                  <span class="font-bold text-gray-700">${exp.payer}</span> 先墊款<br>
+                  <span class="text-gray-400">${splitStr}</span>
                 </div>
-                <div class="text-[10px] text-gray-400 font-mono tabular-nums">約 ${exp.twdAmount.toLocaleString()} TWD</div>
+                <div class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</div>
               </div>
-              
-              ${!IS_ARCHIVED ? `<button onclick="promptDelete('${exp.id}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-300 hover:text-red-500 p-1.5 active:bg-red-50 rounded-lg transition-colors">🗑️</button>` : ''}
+              ${!IS_ARCHIVED ? `<button onclick="promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-1 text-gray-300 hover:text-red-500 p-2 active:bg-red-50 rounded-lg transition-colors">🗑️</button>` : ''}
             </div>
           `;
         }
@@ -236,10 +245,11 @@
     }
 
     let pendingDeleteId = null, pendingTripId = null;
-    function promptDelete(id, desc, amount, currency, tripId) {
+    // V20.4 傳入 exp.date 供通知使用
+    function promptDelete(id, date, desc, amount, currency, tripId) {
       hapticVibrate([50, 50]);
       pendingDeleteId = id; pendingTripId = tripId;
-      document.getElementById('deleteTargetDesc').innerText = `項目：${desc}\n金額：${amount.toLocaleString()} ${currency}`;
+      document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${amount.toLocaleString()} ${currency}`;
       document.getElementById('deleteModal').classList.remove('hidden'); document.getElementById('confirmDeleteBtn').onclick = executeDelete;
     }
     function closeDeleteModal() { pendingDeleteId = null; pendingTripId = null; document.getElementById('deleteModal').classList.add('hidden'); }
@@ -253,8 +263,9 @@
         const result = await res.json();
         if (result.status === "success") {
            showToast("撤銷成功，同步至群組", "success");
-           let targetDesc = document.getElementById('deleteTargetDesc').innerText.replace('\n', ' ');
-           await liff.sendMessages([{ type: 'text', text: `🗑️ ${currentUserProfile.displayName} 已撤銷帳目：\n${targetDesc}` }]);
+           let targetDesc = document.getElementById('deleteTargetDesc').innerText;
+           // V20.4 撤銷通知語義化
+           await liff.sendMessages([{ type: 'text', text: `🗑️ ${currentUserProfile.displayName} 撤銷了一筆帳目\n\n${targetDesc}` }]);
            setTimeout(() => liff.closeWindow(), 1000); 
         } else throw new Error();
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); document.getElementById('confirmDeleteBtn').innerText = "確定撤銷"; document.getElementById('confirmDeleteBtn').disabled = false; }
@@ -438,9 +449,20 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("儲存成功！", "success");
+          
+          // V20.4 記帳通知語義化 (動態計算原外幣金額)
           let detailText = ""; const rows = document.getElementById('splitDetailContainer').children;
-          Array.from(rows).forEach(row => { let name = row.querySelector('span.font-medium').innerText; let resSpan = row.querySelector('.live-result'); if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { let val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); if(!isNaN(val) && val > 0) detailText += `\n      • ${name} ${currency} ${val.toLocaleString()}`; } });
-          const notifyMsg = `📝 ${selectedPayerName} 已記帳：${desc || "未命名消費"} ${currency} ${rawAmount.toLocaleString()}${detailText}`;
+          Array.from(rows).forEach(row => { 
+            let name = row.querySelector('span.font-medium').innerText; let val = 0;
+            if (splitMode === "EXACT") { val = parseFloat(row.querySelector('.split-input').value) || 0; } 
+            else { 
+              let resSpan = row.querySelector('.live-result'); 
+              if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
+            }
+            if(val > 0) detailText += `\n  • ${name}: ${val.toLocaleString()} ${currency}`; 
+          });
+          
+          const notifyMsg = `📝 ${currentUserProfile.displayName} 記了一筆帳\n\n📌 項目：${desc || "未命名消費"}\n💰 總額：${rawAmount.toLocaleString()} ${currency} (由 ${selectedPayerName} 付)\n\n--- 分攤明細 ---${detailText}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
