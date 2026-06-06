@@ -83,7 +83,7 @@
             <label class="flex items-baseline text-xs font-medium text-gray-500 mb-1 whitespace-nowrap">
               幣別 <span id="rateDisplay" class="text-[9px] text-blue-500 ml-1 font-bold"></span>
             </label>
-            <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-base shadow-inner"></select>
+            <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-sm shadow-inner"></select>
           </div>
           <div class="w-[60%]">
             <label class="block text-xs font-medium text-gray-500 mb-1 ">總金額</label>
@@ -277,7 +277,7 @@
 
     // 修補 1: mainForm 改為 view-add
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
-    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1=${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
+    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
 
     function renderSplitDetailAdd() {
@@ -288,7 +288,7 @@
       if(mode === 'EXACT' || mode === 'PERCENT') { pBarWrap.classList.remove('hidden'); } else { pBarWrap.classList.add('hidden'); }
 
       MEMBER_LIST.forEach(name => {
-        const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 py-2.5 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
+        const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 py-1.5 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
         if (mode === "EQUAL") { row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-blue-50'); inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 pointer-events-none" checked></div>`; } 
         else if (mode === "EXACT") { inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-24 text-right bg-gray-50 border border-gray-200 rounded py-1.5 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; } 
         else if (mode === "SHARE") { inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded py-1.5 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; } 
@@ -422,7 +422,7 @@
           curSelect.innerHTML = Object.keys(RATE_MATRIX).map(c => `<option value="${c}">${c}</option>`).join('');
           curSelect.value = result.defaultCurrency; 
 
-          document.getElementById('rateDisplay').innerText = `(1=${CURRENT_RATE} TWD)`;
+          document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerText = `📍${IS_ARCHIVED ? '歷史封存' : '目前帳本'} [${result.tripName}]`;
           
           document.getElementById('tabContainer').style.display = 'flex';
