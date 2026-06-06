@@ -10,7 +10,7 @@
     html, body { height: 100%; overflow: hidden; background-color: #f9fafb; }
     .app-container { height: calc(100% - 76px); display: flex; flex-direction: column; }
     .btn-hidden { display: none !important; }
-    .filter-cb:checked + div { background-color: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    .filter-cb:checked + div { background-color: #EEF4FF; color: #2563EB; border-color: #BFDBFE; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     /* Toast 進場/退場動畫 */
     .toast-enter { transform: translateY(-100%); opacity: 0; }
@@ -82,7 +82,7 @@
             <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg py-3 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-base shadow-inner"></select>
           </div>
           <div class="w-[55%]">
-            <label class="block text-xs font-medium text-gray-500 mb-1 text-right">總金額</label>
+            <label class="block text-xs font-medium text-gray-500 mb-1 ">總金額</label>
             <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-2xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg py-2 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
           </div>
         </div>
@@ -177,9 +177,9 @@
 
     function initHistoryFilters() {
       const uniqueDates = [...new Set(ALL_EXPENSES.map(e => e.date))].sort();
-      document.getElementById('dateFilters').innerHTML = uniqueDates.map(d => `<label class="relative cursor-pointer"><input type="checkbox" value="${d}" class="filter-cb filter-date hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-full transition-colors active:scale-95 transform">${d.slice(5)}</div></label>`).join('');
-      document.getElementById('payerFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-payer hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-full transition-colors active:scale-95 transform">${m}</div></label>`).join('');
-      document.getElementById('splitterFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-splitter hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-full transition-colors active:scale-95 transform">${m}</div></label>`).join('');
+      document.getElementById('dateFilters').innerHTML = uniqueDates.map(d => `<label class="relative cursor-pointer"><input type="checkbox" value="${d}" class="filter-cb filter-date hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-xl transition-colors active:scale-95 transform">${d.slice(5)}</div></label>`).join('');
+      document.getElementById('payerFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-payer hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-xl transition-colors active:scale-95 transform">${m}</div></label>`).join('');
+      document.getElementById('splitterFilters').innerHTML = MEMBER_LIST.map(m => `<label class="relative cursor-pointer"><input type="checkbox" value="${m}" class="filter-cb filter-splitter hidden" checked onchange="renderHistory()"><div class="px-2.5 py-1 bg-white border border-gray-200 shadow-sm text-gray-600 text-[10px] rounded-xl transition-colors active:scale-95 transform">${m}</div></label>`).join('');
     }
 
     function renderHistory() {
@@ -233,7 +233,7 @@
 
     // 修補 1: mainForm 改為 view-add
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
-    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 ${e.target.value} = ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
+    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1=${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
 
     function renderSplitDetailAdd() {
@@ -378,7 +378,7 @@
           curSelect.innerHTML = Object.keys(RATE_MATRIX).map(c => `<option value="${c}">${c}</option>`).join('');
           curSelect.value = result.defaultCurrency; 
 
-          document.getElementById('rateDisplay').innerText = `(1 ${result.defaultCurrency} = ${CURRENT_RATE} TWD)`;
+          document.getElementById('rateDisplay').innerText = `(1=${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerText = `📍${IS_ARCHIVED ? '歷史封存' : '目前帳本'} [${result.tripName}]`;
           
           document.getElementById('tabContainer').style.display = 'flex';
@@ -401,7 +401,7 @@
       else if (splitMode === "EXACT") { const inputs = document.querySelectorAll('.split-input'); inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); splitDetailObj[name] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); }); let calculatedTwdSum = Object.values(splitDetailObj).reduce((a, b) => a + b, 0); let residue = totalTwd - calculatedTwdSum; const lastPerson = Array.from(inputs).pop().getAttribute('data-name'); if(residue !== 0) splitDetailObj[lastPerson] += residue; } 
       else if (splitMode === "SHARE" || splitMode === "PERCENT") { const inputs = document.querySelectorAll('.split-input'); let totalMetric = 0, metricMap = {}; inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); metricMap[name] = val; totalMetric += val; }); let calculatedSum = 0; MEMBER_LIST.forEach(name => { splitDetailObj[name] = Math.round(totalTwd * (metricMap[name] / totalMetric)); calculatedSum += splitDetailObj[name]; }); let residue = totalTwd - calculatedSum; if(residue !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residue; }
 
-      btn.disabled = true; btn.innerText = "⏳ 寫入雲端矩陣中...";
+      btn.disabled = true; btn.innerText = "⏳ 儲存此筆交易中...";
       try {
         const payload = { action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: currentUserProfile.userId, payerName: selectedPayerName, description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: splitMode, splitDetailString: JSON.stringify(splitDetailObj) };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
