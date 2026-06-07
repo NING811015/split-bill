@@ -586,16 +586,89 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         
         if (result.status === "success") {
-           showToast("設定儲存成功！", "success");
-           if (IS_DRAFT) {
-             const msg = `🎉 旅程「${name}」創立成功！\n📅 ${start} ~ ${end}\n\n📌 請點擊下方連結加入帳本，並長按「設為公告」釘在群組頂端：\n👉 https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
-             await liff.sendMessages([{ type: 'text', text: msg }]);
-             setTimeout(() => liff.closeWindow(), 1000);
-           } else {
-             setTimeout(()=> window.location.reload(), 800);
-           }
-        } else throw new Error(result.message);
-      } catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
+  showToast("設定儲存成功！", "success");
+
+  if (IS_DRAFT) {
+
+    const tripUrl =
+      `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
+
+    const msg =
+`🎉 已建立新旅程
+
+📍 ${name}
+📅 ${start} ~ ${end}
+
+請透過下方卡片開啟帳本`;
+
+    await liff.sendMessages([
+      {
+        type: 'text',
+        text: msg
+      },
+      {
+        type: 'flex',
+        altText: `開啟帳本｜${name}`,
+        contents: {
+          type: 'bubble',
+
+          body: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'text',
+                text: `✈️ ${name}`,
+                weight: 'bold',
+                size: 'lg'
+              },
+              {
+                type: 'text',
+                text: `📅 ${start} ~ ${end}`,
+                size: 'sm',
+                color: '#888888',
+                margin: 'md'
+              },
+              {
+                type: 'text',
+                text: 'Stay NoMad. Split the bill.',
+                size: 'sm',
+                color: '#888888',
+                margin: 'md'
+              }
+            ]
+          },
+
+          footer: {
+            type: 'box',
+            layout: 'vertical',
+            contents: [
+              {
+                type: 'button',
+                style: 'primary',
+                action: {
+                  type: 'uri',
+                  label: '開啟帳本',
+                  uri: tripUrl
+                }
+              }
+            ]
+          }
+        }
+      }
+    ]);
+
+    setTimeout(() => liff.closeWindow(), 2000);
+
+  } else {
+
+    setTimeout(() => window.location.reload(), 800);
+
+  }
+
+} else {
+  throw new Error(result.message);
+}catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
     }
 
     async function submitExpense() {
