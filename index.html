@@ -578,7 +578,7 @@
       btn.disabled = true; btn.innerText = "⏳ 儲存中..."; hapticVibrate(50);
       try {
         const payload = { 
-           action: IS_DRAFT : "updateTrip", 
+           action: "updateTrip", 
            tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId, 
            tripName: name, startDate: start, endDate: end, defaultCurrency: defCur, currencies: curStr, 
            customRates: localCustomRates 
