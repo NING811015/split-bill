@@ -110,8 +110,8 @@
         
         <div class="border-t border-gray-100 pt-3">
           <div class="flex justify-between items-center mb-2">
-            <label class="block text-xs font-bold text-gray-500">💱 支援外幣與預設幣別</label>
-            <span class="text-[9px] text-gray-400">點擊選取支援，再次點擊設為預設(藍底)</span>
+            <label class="block text-xs font-bold text-gray-500">💱 旅程使用幣別</label>
+            <span class="text-[9px] text-gray-400">點擊選取，再次點擊設為預設(深藍底)</span>
           </div>
           <div id="currencyChipsArea" class="flex flex-wrap gap-2 mb-2">
              </div>
@@ -123,7 +123,7 @@
            <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 設定新幣別 (<span id="newRateSymbol"></span>) 預設匯率</label>
            <div class="flex items-center gap-2">
              <span class="text-sm font-mono text-orange-700 whitespace-nowrap shrink-0">1 外幣 = </span>
-             <input type="text" id="setNewRate" inputmode="decimal" class="flex-grow bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：0.024">
+             <input type="text" id="setNewRate" inputmode="decimal" class="w-32 bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：0.024">
              <span class="text-sm font-mono text-orange-700">TWD</span>
            </div>
         </div>
@@ -135,8 +135,8 @@
       </div>
 
       <div id="activeSettingsArea" class="mt-4 space-y-3 hidden">
-        <button onclick="sendInviteLink()" class="w-full bg-green-20 text-green-700 font-bold rounded-xl py-3 active:bg-green-200 border border-green-200">🔗 重發邀請連結</button>
-        <button onclick="promptArchiveTrip()" class="w-full bg-red-100 text-red-600 font-bold rounded-xl py-3 active:bg-red-200 border border-red-200">📦 結團並封存</button>
+        <button onclick="sendInviteLink()" class="w-full bg-green-40 text-green-700 font-bold rounded-xl py-3 active:bg-green-200 border border-green-200">🔗 重發群組連結</button>
+        <button onclick="promptArchiveTrip()" class="w-full bg-red-100 text-red-600 font-bold rounded-xl py-3 active:bg-red-200 border border-red-200">📦 結團改為唯讀</button>
       </div>
       <div class="pb-24"></div>
     </div>
