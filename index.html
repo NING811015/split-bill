@@ -594,19 +594,8 @@
     const tripUrl =
       `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
 
-    const msg =
-`🎉 已建立新旅程
-
-📍 ${name}
-📅 ${start} ~ ${end}
-
-請透過下方卡片開啟帳本`;
 
     await liff.sendMessages([
-      {
-        type: 'text',
-        text: msg
-      },
       {
         type: 'flex',
         altText: `開啟帳本｜${name}`,
@@ -643,7 +632,7 @@
             layout: 'vertical',
             contents: [
               {
-                type: 'button',size: 'micro',height: 'sm',color: '#2563EB,
+                type: 'button',size: 'micro',height: 'sm',color: '#2563EB',
                 style: 'primary',
                 action: {
                   type: 'uri',
