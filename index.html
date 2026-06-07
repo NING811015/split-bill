@@ -733,7 +733,7 @@
             if(val > 0) detailText += `\n  • ${name}: ${val.toLocaleString()} ${currency}`; 
           });
           
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n (由 ${selectedPayerName} 付)\n--- 明細 ---${detailText}\n\n (${currentUserProfile.displayName} 新增)\n`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👳 ${selectedPayerName} 付\n------ 明細 ------${detailText}\n\n by${currentUserProfile.displayName} `;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
