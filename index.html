@@ -761,7 +761,7 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
            showToast("結團成功！", "success");
-           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n不再接受新增帳目，請依最終清算明細進行線下轉帳結清。` }]);
+           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n不再接受新增帳目，歷史紀錄仍可檢視。` }]);
            setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
