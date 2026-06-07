@@ -12,6 +12,16 @@
     .btn-hidden { display: none !important; }
     .filter-btn { transition: all 0.15s; }
     .filter-btn.active { background-color: #EFF6FF; color: #1D4ED8; font-weight: 700; box-shadow: inset 0 0 0 1px #BFDBFE; }
+    
+    /* V21.0 水平滑動容器 (隱藏捲軸) */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    /* V21.0 幣別 Chips 樣式 */
+    .chip-btn { padding: 4px 12px; border-radius: 9999px; border: 1px solid #E5E7EB; background: #fff; font-size: 11px; font-weight: 600; color: #6B7280; transition: all 0.15s; }
+    .chip-btn.selected { background: #EEF4FF; border-color: #3B82F6; color: #2563EB; }
+    .chip-btn.default { background: #3B82F6; border-color: #2563EB; color: #fff; }
+    
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     .toast-enter { transform: translateY(-100%); opacity: 0; }
     .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -19,6 +29,10 @@
     .split-mode-btn { height:40px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; font-size:12px; font-weight:600; color:#6B7280; transition:all .15s; }
     .split-mode-btn.active { background:#EEF4FF; border-color:#3B82F6; color:#2563EB;}
     .split-mode-btn:active { transform:scale(.97);}
+    
+    /* 自訂 Details/Summary 折疊樣式 */
+    details > summary { list-style: none; }
+    details > summary::-webkit-details-marker { display: none; }
   </style>
 </head>
 <body class="text-gray-800 font-sans relative">
@@ -65,10 +79,15 @@
     </div>
 
     <div class="p-4 flex flex-col h-full overflow-y-auto bg-gray-50/80" id="view-dashboard" style="display: none;">
-      <h2 class="text-lg font-bold text-gray-800 mb-4">🚀 我的旅程總覽</h2>
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🚀</span> 我的旅程總覽</h2>
       <div id="dashboardActive" class="space-y-4 mb-6"></div>
-      <h2 class="text-sm font-bold text-gray-500 mb-3 border-t border-gray-200 pt-4">🔒 歷史封存</h2>
-      <div id="dashboardArchived" class="space-y-4"></div>
+      
+      <details class="group">
+        <summary class="text-sm font-bold text-gray-500 mb-3 border-t border-gray-200 pt-4 flex items-center gap-2 cursor-pointer select-none">
+          <span class="transition-transform group-open:rotate-90">▶</span> 🔒 歷史封存
+        </summary>
+        <div id="dashboardArchived" class="space-y-4 mt-2"></div>
+      </details>
       <div class="pb-20"></div>
     </div>
 
@@ -88,21 +107,28 @@
             <input type="date" id="setEndDate" class="w-full bg-gray-50 rounded-lg p-2 text-sm border border-gray-200">
           </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-1">💰 預設幣別 (單選)</label>
-          <input type="text" id="setDefaultCurrency" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm font-mono border border-gray-200 uppercase" placeholder="TWD" value="TWD">
+        
+        <div class="border-t border-gray-100 pt-3">
+          <div class="flex justify-between items-center mb-2">
+            <label class="block text-xs font-bold text-gray-500">💱 支援外幣與預設幣別</label>
+            <span class="text-[9px] text-gray-400">點擊選取支援，再次點擊設為預設(藍底)</span>
+          </div>
+          <div id="currencyChipsArea" class="flex flex-wrap gap-2 mb-2">
+             </div>
+          <input type="hidden" id="setDefaultCurrency" value="TWD">
+          <input type="hidden" id="setCurrencies" value="TWD">
         </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-1">💱 支援外幣 (以逗號分隔)</label>
-          <input type="text" id="setCurrencies" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm font-mono border border-gray-200 uppercase" placeholder="TWD, KRW, JPY" value="TWD">
-          <p class="text-[10px] text-gray-400 mt-1">若輸入系統未登錄之新幣別，請於下方填寫對台幣之預設匯率。</p>
-        </div>
+
         <div id="newRateArea" class="hidden bg-orange-50 border border-orange-100 p-3 rounded-lg">
-           <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 發現新幣別預設匯率 (1 外幣 = ? TWD)</label>
-           <input type="text" id="setNewRate" inputmode="decimal" class="w-full bg-white rounded-lg p-2 text-sm font-mono border border-orange-200" placeholder="例如：0.024">
+           <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 發現新幣別 (<span id="newRateSymbol"></span>) 預設匯率</label>
+           <div class="flex items-center gap-2">
+             <span class="text-sm font-mono text-orange-700">1 外幣 =</span>
+             <input type="text" id="setNewRate" inputmode="decimal" class="flex-grow bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：0.024">
+             <span class="text-sm font-mono text-orange-700">TWD</span>
+           </div>
         </div>
         
-        <label class="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg mt-4 border border-blue-100 cursor-pointer">
+        <label id="agreeCloseLabel" class="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg mt-4 border border-blue-100 cursor-pointer transition-opacity">
           <input type="checkbox" id="agreeCloseCb" class="mt-0.5 w-4 h-4 text-blue-600 rounded">
           <span class="text-xs text-blue-800 font-medium leading-relaxed">旅程結算完成後，我會記得點「結團」封存帳本。</span>
         </label>
@@ -117,7 +143,7 @@
 
     <div class="pt-3 px-3 pb-0 flex flex-col h-full overflow-hidden" id="view-add" style="display: none;">
       <div class="h-full bg-white rounded-t-xl shadow-sm border-t border-l border-r border-gray-100 flex flex-col flex-grow overflow-hidden">
-        <div class="p-3 space-y-3 flex-shrink-0">
+        <div class="p-3 space-y-3 flex-shrink-0" id="addMainArea">
           <div class="flex space-x-3">
             <div class="w-[40%]">
               <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
@@ -140,19 +166,20 @@
               <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
             </div>
           </div>
-          <div class="border-t border-gray-50 pt-2.5 mt-1">
-            <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
-            <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
-              <button type="button" class="split-mode-btn active" data-mode="EQUAL">👥平均</button>
-              <button type="button" class="split-mode-btn" data-mode="EXACT">🎯拆分</button>
-              <button type="button" class="split-mode-btn" data-mode="SHARE">⚖️份數</button>
-              <button type="button" class="split-mode-btn" data-mode="PERCENT">📈比例</button>
-            </div>
-            <input type="hidden" id="splitModeSelect" value="EQUAL">
-          </div>
         </div>
 
-        <div class="bg-gray-50/50 border-t border-gray-100 flex flex-col flex-grow min-h-0">
+        <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
+          <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
+          <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
+            <button type="button" class="split-mode-btn active" data-mode="EQUAL">👥平均</button>
+            <button type="button" class="split-mode-btn" data-mode="EXACT">🎯拆分</button>
+            <button type="button" class="split-mode-btn" data-mode="SHARE">⚖️份數</button>
+            <button type="button" class="split-mode-btn" data-mode="PERCENT">📈比例</button>
+          </div>
+          <input type="hidden" id="splitModeSelect" value="EQUAL">
+        </div>
+
+        <div class="bg-gray-50/50 border-t border-gray-100 flex flex-col flex-grow min-h-0 mt-3">
           <div class="p-3 pb-2 flex justify-between items-center flex-shrink-0">
             <span class="text-xs font-bold text-gray-600">分帳明細</span>
             <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
@@ -163,22 +190,29 @@
     </div>
 
     <div class="flex flex-col h-full overflow-hidden bg-gray-50" id="view-history" style="display: none;">
-      <div class="p-3 bg-white shadow-sm z-10 flex-shrink-0 space-y-3">
-        <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">📅 日期</span>
-          <div id="dateFilters" class="flex flex-wrap gap-2"></div>
-        </div>
-        <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">💳 付款人</span>
-          <div id="payerFilters" class="flex flex-wrap gap-2"></div>
-        </div>
-        <div><span class="text-[10px] font-bold text-gray-400 mb-1.5 block uppercase tracking-wider">🛍️ 分攤人</span>
-          <div id="splitterFilters" class="flex flex-wrap gap-2"></div>
-        </div>
+      <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-1">
         
-        <div class="bg-amber-50 border border-amber-200 rounded-lg py-2 px-3 flex justify-between items-center shadow-sm">
-          <span class="text-xs font-bold text-amber-800">總計</span>
-          <span class="text-lg font-bold text-amber-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[11px] font-sans text-amber-600">TWD</span></span>
+        <div class="px-3 mb-2 flex justify-between items-center border-b border-gray-50 pb-2">
+          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">總計</span>
+          <span class="text-base font-bold text-amber-600 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-amber-500">TWD</span></span>
+        </div>
+
+        <div class="space-y-2 px-3 pb-1">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">📅 日期</span>
+            <div id="dateFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">💳 付款</span>
+            <div id="payerFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">🛍️ 分攤</span>
+            <div id="splitterFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
+          </div>
         </div>
       </div>
+
       <div class="p-3 flex-grow overflow-y-auto relative z-0">
         <div id="historyListContainer" class="space-y-2 pb-4"></div>
       </div>
@@ -202,6 +236,7 @@
     let currentTab = 'dashboard';
 
     let selectedDates = ['ALL'], selectedPayers = ['ALL'], selectedSplitters = ['ALL'];
+    let localSupportedCurrencies = new Set(), localDefaultCurrency = "TWD";
 
     const hapticVibrate = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
     
@@ -220,15 +255,26 @@
     const bottomBar = document.getElementById('bottomBar');
     const appContainer = document.querySelector('.app-container');
     
+    // V21.0 鍵盤對齊 (推動 splitModeAnchor)
     document.addEventListener('focusin', (e) => { 
       if (e.target.tagName === 'INPUT') { 
         bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; 
-        setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 300);
+        
+        // 若在新增明細頁，且焦點在明細輸入框，將「分帳模式」錨點推到畫面上緣
+        if (currentTab === 'add' && e.target.closest('#splitDetailContainer')) {
+            setTimeout(() => { 
+                document.getElementById('splitModeAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
+            }, 300);
+        } else {
+            setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 300);
+        }
       }
     });
+
     document.addEventListener('focusout', (e) => { 
       setTimeout(() => { 
-        if(document.activeElement.tagName !== 'INPUT' && currentTab !== 'dashboard') { 
+        // 修復: 確保只在 view-add 和 view-settings 時顯示按鈕
+        if(document.activeElement.tagName !== 'INPUT' && (currentTab === 'add' || currentTab === 'settings')) { 
           bottomBar.classList.remove('btn-hidden'); appContainer.style.height = 'calc(100% - 76px)'; 
         } 
       }, 100);
@@ -254,25 +300,30 @@
          else { btn.className = 'tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold'; }
       });
 
-      bottomBar.classList.remove('btn-hidden'); appContainer.style.height = 'calc(100% - 76px)';
-
-      if(tab === 'history') { bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; renderHistory(); } 
-      else if (tab === 'add') { calculateLivePreview(); }
-      else if (tab === 'settings') {
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改";
-        btn.className = "w-full bg-blue-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
+      if(tab === 'history' || tab === 'dashboard') { 
+          bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; 
+          if(tab === 'history') renderHistory(); 
+      } else { 
+          bottomBar.classList.remove('btn-hidden'); appContainer.style.height = 'calc(100% - 76px)'; 
+          
+          const btn = document.getElementById('submitBtn');
+          if (tab === 'add') { calculateLivePreview(); }
+          else if (tab === 'settings') {
+            btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改";
+            btn.className = "w-full bg-blue-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
+          }
       }
     }
 
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
+    // V21.0 互斥篩選器
     function buildFilterHtml(type, list, selectedArr) {
-      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="filter-btn px-3 py-1.5 border rounded-md text-[11px] truncate w-14 text-center ${selectedArr.includes('ALL') ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
+      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
         let display = (type==='date') ? item.slice(5) : item;
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="filter-btn px-3 py-1.5 border rounded-md text-[11px] truncate w-16 text-center ${isActive ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
+        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ${isActive ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
       });
       return html;
     }
@@ -363,14 +414,71 @@
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); document.getElementById('confirmDeleteBtn').innerText = "確定撤銷"; document.getElementById('confirmDeleteBtn').disabled = false; }
     }
 
+    // V21.0 動態幣別 Chips 渲染
+    function renderCurrencyChips() {
+       const area = document.getElementById('currencyChipsArea');
+       let html = '';
+       
+       // 讀取字典並渲染
+       Object.keys(RATE_MATRIX).forEach(c => {
+          let stateClass = '';
+          if (c === localDefaultCurrency) stateClass = 'default';
+          else if (localSupportedCurrencies.has(c)) stateClass = 'selected';
+          
+          html += `<button type="button" onclick="handleChipClick('${c}')" class="chip-btn ${stateClass}">${c}</button>`;
+       });
+       
+       html += `<button type="button" onclick="promptNewCurrency()" class="chip-btn border-dashed border-gray-300 text-gray-400">➕ 自訂</button>`;
+       area.innerHTML = html;
+
+       // 檢查是否需要顯示新匯率輸入框
+       let hasNew = Array.from(localSupportedCurrencies).some(c => c !== 'TWD' && !RATE_MATRIX[c]);
+       if (hasNew) {
+           let newCur = Array.from(localSupportedCurrencies).find(c => c !== 'TWD' && !RATE_MATRIX[c]);
+           document.getElementById('newRateSymbol').innerText = newCur;
+           document.getElementById('newRateArea').classList.remove('hidden');
+       } else {
+           document.getElementById('newRateArea').classList.add('hidden');
+           document.getElementById('setNewRate').value = "";
+       }
+
+       // 同步隱藏 input
+       document.getElementById('setDefaultCurrency').value = localDefaultCurrency;
+       document.getElementById('setCurrencies').value = Array.from(localSupportedCurrencies).join(', ');
+    }
+
+    function handleChipClick(currency) {
+       hapticVibrate(20);
+       if (localSupportedCurrencies.has(currency)) {
+          if (localDefaultCurrency === currency) {
+             // 取消預設，但保留支援 (退回 selected)
+             localDefaultCurrency = Array.from(localSupportedCurrencies).find(c => c !== currency) || "TWD";
+          } else {
+             // 設為預設
+             localDefaultCurrency = currency;
+          }
+       } else {
+          // 加入支援
+          localSupportedCurrencies.add(currency);
+       }
+       renderCurrencyChips();
+    }
+
+    function promptNewCurrency() {
+       let code = prompt("請輸入自訂幣別代碼 (例如 EUR):");
+       if (code && code.trim().length === 3) {
+           code = code.trim().toUpperCase();
+           if (!RATE_MATRIX[code]) {
+               localSupportedCurrencies.add(code);
+               renderCurrencyChips();
+           } else {
+               showToast("此幣別已在系統中", "info");
+           }
+       }
+    }
+
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
     document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
-    
-    document.getElementById('setCurrencies').addEventListener('input', function(e) {
-       let arr = e.target.value.split(',').map(s=>s.trim().toUpperCase());
-       let hasNew = arr.some(c => c && c !== 'TWD' && !RATE_MATRIX[c]);
-       document.getElementById('newRateArea').className = hasNew ? "bg-orange-50 border border-orange-100 p-3 rounded-lg mt-2 block" : "hidden";
-    });
 
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
 
@@ -458,7 +566,7 @@
       if (!name) return showToast("旅程名稱不得為空", "error");
       if (!start || !end) return showToast("請選擇完整日期", "error");
       if (!curStr.includes(defCur)) return showToast("預設幣別必須包含在支援外幣中", "error");
-      if (IS_DRAFT && !agree) return showToast("請勾選同意結團聲明", "error");
+      if (IS_DRAFT && !agree) return showToast("請確認結團聲明", "error");
 
       btn.disabled = true; btn.innerText = "⏳ 儲存中..."; hapticVibrate(50);
       try {
@@ -507,7 +615,7 @@
             if(val > 0) detailText += `\n  • ${name}: ${val.toLocaleString()} ${currency}`; 
           });
           
-          const notifyMsg = `📝 ${currentUserProfile.displayName} 記了一筆帳\n\n📌 項目：${desc || "未命名消費"}\n💰 總額：${rawAmount.toLocaleString()} ${currency} (由 ${selectedPayerName} 付)\n\n--- 分攤明細 ---${detailText}`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n 由 ${selectedPayerName} 付)\n--- 明細 ---${detailText}\n\n ${currentUserProfile.displayName} 新增\n`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
@@ -570,16 +678,16 @@
         if (result.status === "error") { throwFatalError("存取遭拒", result.message); return; }
 
         const renderTripCard = (t, statusClass, statusText) => `
-          <div onclick="navigateToTrip('${t.id}')" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group overflow-hidden">
+          <div onclick="navigateToTrip('${t.id}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group overflow-hidden">
             <div class="absolute inset-0 bg-blue-50 opacity-0 group-active:opacity-100 transition-opacity"></div>
-            <div class="relative z-10 flex justify-between items-start mb-2">
-              <span class="font-bold text-lg text-gray-800 tracking-tight">${t.name}</span>
-              <span class="text-[10px] ${statusClass} px-2.5 py-1 rounded-full font-bold shadow-sm">${statusText}</span>
+            <div class="relative z-10 flex justify-between items-start mb-1">
+              <span class="font-bold text-base text-gray-800 tracking-tight">${t.name}</span>
+              <span class="text-[10px] ${statusClass} px-2 py-0.5 rounded font-bold shadow-sm">${statusText}</span>
             </div>
-            <div class="relative z-10 text-xs text-gray-400 mb-3 font-mono tracking-tight">${t.dateRange}</div>
-            <div class="relative z-10 flex space-x-4 text-xs font-bold text-gray-500 border-t border-gray-50 pt-3 mt-2">
-              <span class="flex items-center">👥 <span class="ml-1 font-mono">${t.memberCount}</span> 人</span>
-              <span class="flex items-center">📝 <span class="ml-1 font-mono">${t.expenseCount}</span> 筆帳目</span>
+            <div class="relative z-10 text-[10px] text-gray-400 mb-2 font-mono tracking-tight">${t.dateRange}</div>
+            <div class="relative z-10 flex space-x-3 text-[11px] font-bold text-gray-500 border-t border-gray-50 pt-2">
+              <span class="flex items-center">👥 <span class="ml-1 font-mono">${t.memberCount}</span></span>
+              <span class="flex items-center">📝 <span class="ml-1 font-mono">${t.expenseCount}</span></span>
             </div>
           </div>
         `;
@@ -589,7 +697,7 @@
           
           let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-green-50 text-green-600 border border-green-100", "記錄中")).join('');
           if (result.canCreate) {
-             html = `<button onclick="switchTab('settings')" class="w-full bg-blue-50 border border-blue-200 text-blue-600 font-bold rounded-2xl py-4 mb-4 shadow-sm active:bg-blue-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
+             html = `<button onclick="switchTab('settings')" class="w-full bg-blue-50 border border-blue-200 text-blue-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-blue-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
              IS_CREATOR = true; IS_DRAFT = true; 
           }
           document.getElementById('dashboardActive').innerHTML = html;
@@ -610,7 +718,7 @@
           IS_CREATOR = result.isCreator;
           RATE_MATRIX = result.rateMatrix || {}; 
           GLOBAL_FEE_RATE = result.feeRate || 0; 
-          CURRENT_RATE = RATE_MATRIX[result.defaultCurrency] || 1.0;
+          
           MEMBER_LIST = result.members || []; ALL_EXPENSES = result.expenses || []; 
 
           let tabsHtml = '';
@@ -619,7 +727,7 @@
              tabsHtml += `<div data-tab="history" onclick="switchTab('history')" class="tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">📜 帳務明細</div>`;
           }
           if (IS_CREATOR || IS_DRAFT) {
-             tabsHtml += `<div data-tab="settings" onclick="switchTab('settings')" class="tab-btn ${IS_DRAFT ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">⚙️ 設定</div>`;
+             tabsHtml += `<div data-tab="settings" onclick="switchTab('settings')" class="tab-btn ${IS_DRAFT ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">⚙️ 旅程管理</div>`;
           }
           document.getElementById('tabContainer').innerHTML = tabsHtml;
 
@@ -627,9 +735,21 @@
              document.getElementById('setTripName').value = result.tripName || "";
              if(result.startDate) document.getElementById('setStartDate').value = result.startDate.replace(/\//g, '-');
              if(result.endDate) document.getElementById('setEndDate').value = result.endDate.replace(/\//g, '-');
-             document.getElementById('setDefaultCurrency').value = result.defaultCurrency || "TWD";
-             document.getElementById('setCurrencies').value = result.currenciesStr || "TWD";
-             if(!IS_DRAFT) document.getElementById('activeSettingsArea').classList.remove('hidden');
+             
+             // V21: 載入並渲染幣別 Chips
+             let curStr = result.currenciesStr || "TWD";
+             localSupportedCurrencies = new Set(curStr.split(',').map(s=>s.trim().toUpperCase()));
+             localDefaultCurrency = result.defaultCurrency || "TWD";
+             renderCurrencyChips();
+             
+             // V21: 防呆勾選狀態
+             if(!IS_DRAFT) {
+                document.getElementById('activeSettingsArea').classList.remove('hidden');
+                const cb = document.getElementById('agreeCloseCb');
+                const label = document.getElementById('agreeCloseLabel');
+                cb.checked = true; cb.disabled = true;
+                label.classList.add('opacity-50', 'pointer-events-none');
+             }
           }
 
           if (IS_DRAFT) {
@@ -638,13 +758,14 @@
              switchTab('settings'); return;
           }
 
+          CURRENT_RATE = RATE_MATRIX[localDefaultCurrency] || 1.0;
           const payerSel = document.getElementById('payerSelect');
           payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">${m}</option>`).join('');
           if (result.suggestedName && MEMBER_LIST.includes(result.suggestedName)) { payerSel.value = result.suggestedName; }
           
           const curSelect = document.getElementById('currencySelect');
-          curSelect.innerHTML = Object.keys(RATE_MATRIX).map(c => `<option value="${c}">${c}</option>`).join('');
-          curSelect.value = result.defaultCurrency; 
+          curSelect.innerHTML = Array.from(localSupportedCurrencies).map(c => `<option value="${c}">${c}</option>`).join('');
+          curSelect.value = localDefaultCurrency; 
 
           document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerHTML =
