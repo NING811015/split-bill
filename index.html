@@ -261,19 +261,51 @@
     
     // V21.2 鍵盤擠壓動態摺疊主軸區 (Dynamic Collapse)
     document.addEventListener('focusin', (e) => { 
-      if (e.target.tagName === 'INPUT') { 
-        clearTimeout(restoreMainAreaTimeout);
-        bottomBar.classList.add('btn-hidden'); 
-        appContainer.style.height = '100%'; 
-        
-        if (currentTab === 'add' && e.target.closest('#splitDetailContainer')) {
-            document.getElementById('addMainArea').classList.add('hidden');
-            setTimeout(() => { document.getElementById('splitModeAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
-        } else {
-            setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 300);
-        }
-      }
-    });
+  if (e.target.tagName === 'INPUT') { 
+
+    clearTimeout(restoreMainAreaTimeout);
+
+    if (currentTab === 'add') {
+      bottomBar.classList.add('btn-hidden');
+      appContainer.style.height = '100%';
+    }
+
+    if (
+      currentTab === 'add' &&
+      e.target.closest('#splitDetailContainer')
+    ) {
+
+      document
+        .getElementById('addMainArea')
+        .classList
+        .add('hidden');
+
+      setTimeout(() => {
+
+        document
+          .getElementById('splitModeAnchor')
+          .scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+
+      }, 50);
+
+    } else {
+
+      setTimeout(() => {
+
+        e.target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end'
+        });
+
+      }, 300);
+
+    }
+
+  }
+});
 
     document.addEventListener('focusout', (e) => { 
       restoreMainAreaTimeout = setTimeout(() => { 
