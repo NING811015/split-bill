@@ -51,7 +51,7 @@
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
       <div class="text-4xl">👋</div>
       <h2 class="text-xl font-bold text-gray-800">歡迎加入旅程</h2>
-      <p class="text-sm text-gray-500">系統偵測到您是初次使用，請設定群組內可辨識的暱稱（限 5 個字以內）。</p>
+      <p class="text-sm text-gray-500">請設定群組內可辨識的暱稱（限 5 個字以內）。</p>
       <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner">
       <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-blue-600 text-white font-bold rounded-xl py-3 active:bg-blue-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
     </div>
@@ -746,6 +746,89 @@
       calculateLivePreview();
     });
 
+    async function submitRegistration() {
+
+  const nickname =
+    document
+      .getElementById(
+        'realNameInput'
+      )
+      .value
+      .trim();
+
+  if (!nickname) {
+    showToast(
+      "請輸入暱稱",
+      "error"
+    );
+    return;
+  }
+
+  const btn =
+    document.getElementById(
+      'registerBtn'
+    );
+
+  btn.disabled = true;
+  btn.innerText = "註冊中...";
+
+  try {
+
+    const payload = {
+      action: "registerUser",
+      tripId: currentTripId,
+      userId: currentUserProfile.userId,
+      realName: nickname
+    };
+
+    const res =
+      await fetch(
+        GAS_WEB_APP_URL,
+        {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        }
+      );
+
+    const result =
+      await res.json();
+
+    if (
+      result.status === "success"
+    ) {
+
+      showToast(
+        "註冊成功",
+        "success"
+      );
+
+      setTimeout(
+        () => window.location.reload(),
+        500
+      );
+
+    } else {
+
+      throw new Error(
+        result.message
+      );
+
+    }
+
+  } catch (e) {
+
+    showToast(
+      e.message,
+      "error"
+    );
+
+    btn.disabled = false;
+    btn.innerText =
+      "完成註冊並進入";
+
+  }
+}
+    
     async function initializeLiff() {
       const statusLight = document.getElementById('statusLight');
       try {
