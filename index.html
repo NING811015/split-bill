@@ -13,14 +13,12 @@
     .filter-btn { transition: all 0.15s; }
     .filter-btn.active { background-color: #EFF6FF; color: #1D4ED8; font-weight: 700; box-shadow: inset 0 0 0 1px #BFDBFE; }
     
-    /* V21.0 水平滑動容器 (隱藏捲軸) */
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     
-    /* V21.0 幣別 Chips 樣式 */
     .chip-btn { padding: 4px 12px; border-radius: 9999px; border: 1px solid #E5E7EB; background: #fff; font-size: 11px; font-weight: 600; color: #6B7280; transition: all 0.15s; }
     .chip-btn.selected { background: #EEF4FF; border-color: #3B82F6; color: #2563EB; }
-    .chip-btn.default { background: #3B82F6; border-color: #2563EB; color: #fff; }
+    .chip-btn.default { background: #1D4ED8; border-color: #1E3A8A; color: #fff; } /* 改為深藍底 */
     
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     .toast-enter { transform: translateY(-100%); opacity: 0; }
@@ -30,7 +28,6 @@
     .split-mode-btn.active { background:#EEF4FF; border-color:#3B82F6; color:#2563EB;}
     .split-mode-btn:active { transform:scale(.97);}
     
-    /* 自訂 Details/Summary 折疊樣式 */
     details > summary { list-style: none; }
     details > summary::-webkit-details-marker { display: none; }
   </style>
@@ -95,7 +92,7 @@
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 mb-1">📍 旅程名稱</label>
-          <input type="text" id="setTripName" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例如：南非挖礦團">
+          <input type="text" id="setTripName" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例如：首爾">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -110,8 +107,8 @@
         
         <div class="border-t border-gray-100 pt-3">
           <div class="flex justify-between items-center mb-2">
-            <label class="block text-xs font-bold text-gray-500">💱 旅程使用幣別</label>
-            <span class="text-[9px] text-gray-400">點擊選取，再次點擊設為預設(深藍底)</span>
+            <label class="block text-xs font-bold text-gray-500 flex items-center gap-1">💱 支援外幣與預設幣別</label>
+            <span class="text-[9px] text-gray-400">點選支援，再次點擊設為預設(藍底)</span>
           </div>
           <div id="currencyChipsArea" class="flex flex-wrap gap-2 mb-2">
              </div>
@@ -120,23 +117,24 @@
         </div>
 
         <div id="newRateArea" class="hidden bg-orange-50 border border-orange-100 p-3 rounded-lg">
-           <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 設定新幣別 (<span id="newRateSymbol"></span>) 預設匯率</label>
+           <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 新增幣別與預設匯率</label>
            <div class="flex items-center gap-2">
-             <span class="text-sm font-mono text-orange-700 whitespace-nowrap shrink-0">1 外幣 = </span>
-             <input type="text" id="setNewRate" inputmode="decimal" class="w-32 bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：0.024">
-             <span class="text-sm font-mono text-orange-700">TWD</span>
+             <input type="text" id="setNewCurCode" maxlength="3" class="w-16 bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-center uppercase" placeholder="代碼">
+             <span class="text-sm font-mono text-orange-700 whitespace-nowrap shrink-0">=</span>
+             <input type="text" id="setNewRate" inputmode="decimal" class="flex-grow bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：0.024">
+             <span class="text-sm font-mono text-orange-700 shrink-0">TWD</span>
            </div>
         </div>
         
         <label id="agreeCloseLabel" class="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg mt-4 border border-blue-100 cursor-pointer transition-opacity">
           <input type="checkbox" id="agreeCloseCb" class="mt-0.5 w-4 h-4 text-blue-600 rounded">
-          <span class="text-xs text-blue-800 font-medium leading-relaxed">旅程完成後，我會記得點「結團」封存帳本。</span>
+          <span class="text-xs text-blue-800 font-medium leading-relaxed">旅程結算完成後，我會記得點「結團」封存帳本。</span>
         </label>
       </div>
 
       <div id="activeSettingsArea" class="mt-4 space-y-3 hidden">
-        <button onclick="sendInviteLink()" class="w-full bg-green-40 text-green-700 font-bold rounded-xl py-3 active:bg-green-200 border border-green-200">🔗 重發群組連結</button>
-        <button onclick="promptArchiveTrip()" class="w-full bg-red-100 text-red-600 font-bold rounded-xl py-3 active:bg-red-200 border border-red-200">📦 結團改為唯讀</button>
+        <button onclick="sendInviteLink()" class="w-full bg-green-50 text-green-700 font-bold rounded-xl py-3 active:bg-green-100 border border-green-200">🔗 重發群組連結</button>
+        <button onclick="promptArchiveTrip()" class="w-full bg-red-50 text-red-600 font-bold rounded-xl py-3 active:bg-red-100 border border-red-200">📦 結團改為唯讀</button>
       </div>
       <div class="pb-24"></div>
     </div>
@@ -184,7 +182,7 @@
             <span class="text-xs font-bold text-gray-600">分帳明細</span>
             <span id="balanceStatus" class="text-[10px] font-bold text-gray-400">請輸入總金額</span>
           </div>
-          <div id="splitDetailContainer" class="px-3 pb-24 space-y-1.5 overflow-y-auto flex-grow"></div>
+          <div id="splitDetailContainer" class="px-3 pb-32 space-y-1.5 overflow-y-auto flex-grow"></div>
         </div>
       </div>
     </div>
@@ -237,6 +235,7 @@
 
     let selectedDates = ['ALL'], selectedPayers = ['ALL'], selectedSplitters = ['ALL'];
     let localSupportedCurrencies = new Set(), localDefaultCurrency = "TWD";
+    let isShowingNewCurrencyInput = false;
 
     const hapticVibrate = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
     
@@ -255,12 +254,11 @@
     const bottomBar = document.getElementById('bottomBar');
     const appContainer = document.querySelector('.app-container');
     
-    // V21.0 鍵盤對齊 (推動 splitModeAnchor)
+    // V21.1 鍵盤對齊精準定位
     document.addEventListener('focusin', (e) => { 
       if (e.target.tagName === 'INPUT') { 
         bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; 
         
-        // 若在新增明細頁，且焦點在明細輸入框，將「分帳模式」錨點推到畫面上緣
         if (currentTab === 'add' && e.target.closest('#splitDetailContainer')) {
             setTimeout(() => { 
                 document.getElementById('splitModeAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
@@ -273,7 +271,6 @@
 
     document.addEventListener('focusout', (e) => { 
       setTimeout(() => { 
-        // 修復: 確保只在 view-add 和 view-settings 時顯示按鈕
         if(document.activeElement.tagName !== 'INPUT' && (currentTab === 'add' || currentTab === 'settings')) { 
           bottomBar.classList.remove('btn-hidden'); appContainer.style.height = 'calc(100% - 76px)'; 
         } 
@@ -317,7 +314,6 @@
 
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
-    // V21.0 互斥篩選器
     function buildFilterHtml(type, list, selectedArr) {
       let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
@@ -414,13 +410,16 @@
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); document.getElementById('confirmDeleteBtn').innerText = "確定撤銷"; document.getElementById('confirmDeleteBtn').disabled = false; }
     }
 
-    // V21.0 動態幣別 Chips 渲染
+    // V21.1 動態幣別 Chips 渲染 (全域字典聯集)
     function renderCurrencyChips() {
        const area = document.getElementById('currencyChipsArea');
        let html = '';
        
-       // 讀取字典並渲染
-       Object.keys(RATE_MATRIX).forEach(c => {
+       // 將 RATE_MATRIX 內的所有 Key 取出，與 localSupportedCurrencies 取聯集
+       let allKeys = new Set([...Object.keys(RATE_MATRIX), ...localSupportedCurrencies]);
+       
+       Array.from(allKeys).forEach(c => {
+          if(!c || c === 'TWD') return; // TWD 特別處理
           let stateClass = '';
           if (c === localDefaultCurrency) stateClass = 'default';
           else if (localSupportedCurrencies.has(c)) stateClass = 'selected';
@@ -428,21 +427,16 @@
           html += `<button type="button" onclick="handleChipClick('${c}')" class="chip-btn ${stateClass}">${c}</button>`;
        });
        
-       html += `<button type="button" onclick="promptNewCurrency()" class="chip-btn border-dashed border-gray-300 text-gray-400">➕ 自訂</button>`;
+       // TWD 放最前面
+       let twdClass = (localDefaultCurrency === 'TWD') ? 'default' : (localSupportedCurrencies.has('TWD') ? 'selected' : '');
+       html = `<button type="button" onclick="handleChipClick('TWD')" class="chip-btn ${twdClass}">TWD</button>` + html;
+
+       // 展開/收合 新增幣別輸入框的開關
+       html += `<button type="button" onclick="toggleNewCurrencyArea()" class="chip-btn border-dashed border-gray-300 text-gray-400">➕ 自訂</button>`;
        area.innerHTML = html;
 
-       // 檢查是否需要顯示新匯率輸入框
-       let hasNew = Array.from(localSupportedCurrencies).some(c => c !== 'TWD' && !RATE_MATRIX[c]);
-       if (hasNew) {
-           let newCur = Array.from(localSupportedCurrencies).find(c => c !== 'TWD' && !RATE_MATRIX[c]);
-           document.getElementById('newRateSymbol').innerText = newCur;
-           document.getElementById('newRateArea').classList.remove('hidden');
-       } else {
-           document.getElementById('newRateArea').classList.add('hidden');
-           document.getElementById('setNewRate').value = "";
-       }
+       document.getElementById('newRateArea').classList.toggle('hidden', !isShowingNewCurrencyInput);
 
-       // 同步隱藏 input
        document.getElementById('setDefaultCurrency').value = localDefaultCurrency;
        document.getElementById('setCurrencies').value = Array.from(localSupportedCurrencies).join(', ');
     }
@@ -451,31 +445,34 @@
        hapticVibrate(20);
        if (localSupportedCurrencies.has(currency)) {
           if (localDefaultCurrency === currency) {
-             // 取消預設，但保留支援 (退回 selected)
              localDefaultCurrency = Array.from(localSupportedCurrencies).find(c => c !== currency) || "TWD";
           } else {
-             // 設為預設
              localDefaultCurrency = currency;
           }
        } else {
-          // 加入支援
           localSupportedCurrencies.add(currency);
        }
        renderCurrencyChips();
     }
 
-    function promptNewCurrency() {
-       let code = prompt("請輸入自訂幣別代碼 (例如 EUR):");
-       if (code && code.trim().length === 3) {
-           code = code.trim().toUpperCase();
-           if (!RATE_MATRIX[code]) {
-               localSupportedCurrencies.add(code);
-               renderCurrencyChips();
-           } else {
-               showToast("此幣別已在系統中", "info");
-           }
-       }
+    // V21.1 無彈窗雙輸入流
+    function toggleNewCurrencyArea() {
+       isShowingNewCurrencyInput = !isShowingNewCurrencyInput;
+       renderCurrencyChips();
     }
+
+    // 監聽自訂幣別的代碼變化，如果滿 3 碼且字典已有，直接選取並收起
+    document.getElementById('setNewCurCode').addEventListener('input', function(e) {
+       let code = e.target.value.trim().toUpperCase();
+       if (code.length === 3 && RATE_MATRIX[code]) {
+           localSupportedCurrencies.add(code);
+           isShowingNewCurrencyInput = false;
+           e.target.value = "";
+           document.getElementById('setNewRate').value = "";
+           showToast("此幣別已在系統中", "info");
+           renderCurrencyChips();
+       }
+    });
 
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
     document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
@@ -558,9 +555,21 @@
       const name = document.getElementById('setTripName').value.trim();
       const start = document.getElementById('setStartDate').value.replace(/-/g, '/');
       const end = document.getElementById('setEndDate').value.replace(/-/g, '/');
-      const defCur = document.getElementById('setDefaultCurrency').value.trim().toUpperCase();
-      const curStr = document.getElementById('setCurrencies').value.trim().toUpperCase();
-      const newRate = document.getElementById('setNewRate').value.trim();
+      
+      // V21.1 攔截自訂幣別輸入框的值
+      const newCurCode = document.getElementById('setNewCurCode').value.trim().toUpperCase();
+      const newRateStr = document.getElementById('setNewRate').value.trim();
+      
+      if (isShowingNewCurrencyInput) {
+          if (newCurCode.length !== 3) return showToast("幣別代碼需為3位英文字母", "error");
+          if (!newRateStr || isNaN(parseFloat(newRateStr))) return showToast("請輸入有效的匯率數字", "error");
+          localSupportedCurrencies.add(newCurCode);
+      }
+
+      // 將 Set 轉回字串送出
+      let curStr = Array.from(localSupportedCurrencies).join(', ').toUpperCase();
+      let defCur = localDefaultCurrency;
+
       const agree = document.getElementById('agreeCloseCb').checked;
 
       if (!name) return showToast("旅程名稱不得為空", "error");
@@ -570,7 +579,7 @@
 
       btn.disabled = true; btn.innerText = "⏳ 儲存中..."; hapticVibrate(50);
       try {
-        const payload = { action: IS_DRAFT ? "createTrip" : "updateTrip", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId, tripName: name, startDate: start, endDate: end, defaultCurrency: defCur, currencies: curStr, newRate: parseFloat(newRate)||0 };
+        const payload = { action: IS_DRAFT ? "createTrip" : "updateTrip", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId, tripName: name, startDate: start, endDate: end, defaultCurrency: defCur, currencies: curStr, newRate: parseFloat(newRateStr)||0, newCurCode: newCurCode };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         
         if (result.status === "success") {
@@ -615,7 +624,7 @@
             if(val > 0) detailText += `\n  • ${name}: ${val.toLocaleString()} ${currency}`; 
           });
           
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n 由 ${selectedPayerName} 付)\n--- 明細 ---${detailText}\n\n ${currentUserProfile.displayName} 新增\n`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n (由 ${selectedPayerName} 付)\n--- 明細 ---${detailText}\n\n (${currentUserProfile.displayName} 新增)\n`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
@@ -736,13 +745,11 @@
              if(result.startDate) document.getElementById('setStartDate').value = result.startDate.replace(/\//g, '-');
              if(result.endDate) document.getElementById('setEndDate').value = result.endDate.replace(/\//g, '-');
              
-             // V21: 載入並渲染幣別 Chips
              let curStr = result.currenciesStr || "TWD";
              localSupportedCurrencies = new Set(curStr.split(',').map(s=>s.trim().toUpperCase()));
              localDefaultCurrency = result.defaultCurrency || "TWD";
              renderCurrencyChips();
              
-             // V21: 防呆勾選狀態
              if(!IS_DRAFT) {
                 document.getElementById('activeSettingsArea').classList.remove('hidden');
                 const cb = document.getElementById('agreeCloseCb');
