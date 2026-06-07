@@ -586,6 +586,7 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         
         if (result.status === "success") {
+
   showToast("設定儲存成功！", "success");
 
   if (IS_DRAFT) {
@@ -611,7 +612,6 @@
         altText: `開啟帳本｜${name}`,
         contents: {
           type: 'bubble',
-
           body: {
             type: 'box',
             layout: 'vertical',
@@ -638,7 +638,6 @@
               }
             ]
           },
-
           footer: {
             type: 'box',
             layout: 'vertical',
@@ -667,9 +666,22 @@
   }
 
 } else {
+
   throw new Error(result.message);
-}catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
-    }
+
+}
+
+} catch (e) {
+
+  showToast(e.message, "error");
+  hapticVibrate([50, 50, 50]);
+  btn.disabled = false;
+  btn.innerText =
+    IS_DRAFT
+      ? "🚀 確認開團並公告"
+      : "💾 儲存修改";
+}
+}
 
     async function submitExpense() {
       if (IS_ARCHIVED) { showToast("已封存旅程無法新增帳目", "error"); hapticVibrate([50, 50, 50]); return; }
