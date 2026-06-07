@@ -120,9 +120,9 @@
         </div>
 
         <div id="newRateArea" class="hidden bg-orange-50 border border-orange-100 p-3 rounded-lg">
-           <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 發現新幣別 (<span id="newRateSymbol"></span>) 預設匯率</label>
+           <label class="block text-xs font-bold text-orange-800 mb-1">⚠️ 設定新幣別 (<span id="newRateSymbol"></span>) 預設匯率</label>
            <div class="flex items-center gap-2">
-             <span class="text-sm font-mono text-orange-700">1 外幣 =</span>
+             <span class="text-sm font-mono text-orange-700 whitespace-nowrap shrink-0">1 外幣 = </span>
              <input type="text" id="setNewRate" inputmode="decimal" class="flex-grow bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：0.024">
              <span class="text-sm font-mono text-orange-700">TWD</span>
            </div>
@@ -130,13 +130,13 @@
         
         <label id="agreeCloseLabel" class="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg mt-4 border border-blue-100 cursor-pointer transition-opacity">
           <input type="checkbox" id="agreeCloseCb" class="mt-0.5 w-4 h-4 text-blue-600 rounded">
-          <span class="text-xs text-blue-800 font-medium leading-relaxed">旅程結算完成後，我會記得點「結團」封存帳本。</span>
+          <span class="text-xs text-blue-800 font-medium leading-relaxed">旅程完成後，我會記得點「結團」封存帳本。</span>
         </label>
       </div>
 
       <div id="activeSettingsArea" class="mt-4 space-y-3 hidden">
-        <button onclick="sendInviteLink()" class="w-full bg-green-100 text-green-700 font-bold rounded-xl py-3 active:bg-green-200 border border-green-200">🔗 在群組重發邀請連結</button>
-        <button onclick="promptArchiveTrip()" class="w-full bg-red-100 text-red-600 font-bold rounded-xl py-3 active:bg-red-200 border border-red-200">📦 強制結團並封存</button>
+        <button onclick="sendInviteLink()" class="w-full bg-green-20 text-green-700 font-bold rounded-xl py-3 active:bg-green-200 border border-green-200">🔗 重發邀請連結</button>
+        <button onclick="promptArchiveTrip()" class="w-full bg-red-100 text-red-600 font-bold rounded-xl py-3 active:bg-red-200 border border-red-200">📦 結團並封存</button>
       </div>
       <div class="pb-24"></div>
     </div>
@@ -633,7 +633,7 @@
     }
 
     function promptArchiveTrip() {
-      if(confirm("⚠️ 確定要強制結團嗎？\n此動作將關閉新增功能並進行最終清算。")) { archiveTrip(); }
+      if(confirm("⚠️ 確定要結團嗎？\n將關閉新增功能並提供最終結算。")) { archiveTrip(); }
     }
 
     async function archiveTrip() {
