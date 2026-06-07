@@ -592,7 +592,7 @@
   if (IS_DRAFT) {
 
     const tripUrl =
-      `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
+      `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
 
 
     await liff.sendMessages([
@@ -878,7 +878,7 @@
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
             if(result.suggestedName) document.getElementById('realNameInput').value = result.suggestedName; 
-            document.querySelector('#registrationModal p').innerText = "系統偵測到您是初次使用，請設定群組內可辨識的暱稱（限 5 個字以內）。";
+            document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（限 5 個字以內）。";
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
           
