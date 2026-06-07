@@ -630,14 +630,74 @@
     }
 
     async function sendInviteLink() {
-      hapticVibrate(50);
-      try {
-         const name = document.getElementById('setTripName').value;
-         const msg = `✈️ 旅程「${name}」已啟動！\n\n📌 點擊下方連結加入帳本：\n👉 https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
-         await liff.sendMessages([{ type: 'text', text: msg }]);
-         showToast("已發送至群組", "success");
-      } catch(e) { showToast("發送失敗", "error"); }
-    }
+  hapticVibrate(50);
+  try {
+     const name = document.getElementById('setTripName').value.trim();
+     const start = document.getElementById('setStartDate').value.replace(/-/g, '/');
+     const end = document.getElementById('setEndDate').value.replace(/-/g, '/');
+     const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
+
+     if (!name) return showToast("旅程名稱不可為空", "error");
+
+     await liff.sendMessages([
+       {
+         type: 'flex',
+         altText: `開啟帳本｜${name}`,
+         contents: {
+           type: 'bubble',
+           size: 'kilo',
+           body: {
+             type: 'box',
+             layout: 'vertical',
+             backgroundColor: '#FFFDF8',
+             contents: [
+               {
+                 type: 'text',
+                 text: `✈️ ${name}`,
+                 weight: 'bold',
+                 size: 'lg'
+               },
+               {
+                 type: 'text',
+                 text: `📅 ${start || '未設定'} ~ ${end || '未設定'}`,
+                 size: 'sm',
+                 color: '#888888',
+                 margin: 'md'
+               },
+               {
+                 type: 'text',
+                 text: 'Stay NoMad. Split the bill.',
+                 size: 'sm',
+                 color: '#888888',
+                 margin: 'md'
+               }
+             ]
+           },
+           footer: {
+             type: 'box',
+             layout: 'vertical',
+             contents: [
+               {
+                 type: 'button',
+                 height: 'sm',
+                 color: '#2563EB',
+                 style: 'primary',
+                 action: {
+                   type: 'uri',
+                   label: '開啟帳本',
+                   uri: tripUrl
+                 }
+               }
+             ]
+           }
+         }
+       }
+     ]);
+     showToast("已將美化卡片重發至群組", "success");
+  } catch(e) { 
+     showToast("發送失敗", "error"); 
+  }
+}
 
     function promptArchiveTrip() {
       if(confirm("⚠️ 確定要結團嗎？\n將關閉新增功能並提供最終結算。")) { archiveTrip(); }
