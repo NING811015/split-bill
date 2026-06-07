@@ -733,7 +733,7 @@
             if(val > 0) detailText += `\n  • ${name}: ${val.toLocaleString()} ${currency}`; 
           });
           
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👳 ${selectedPayerName} 付\n------ 明細 ------${detailText}\n\n by${currentUserProfile.displayName} `;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👳 ${selectedPayerName} 付\n--------- 明細 ---------${detailText}\n\n by${currentUserProfile.displayName} `;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
@@ -761,7 +761,7 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
            showToast("結團成功！", "success");
-           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n不再接受新增帳目，歷史紀錄仍可檢視。` }]);
+           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n歷史紀錄仍可檢視。` }]);
            setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
