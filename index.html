@@ -59,7 +59,7 @@
       <p class="text-sm text-gray-600 font-mono tabular-nums tracking-tight whitespace-pre-line" id="deleteTargetDesc"></p>
       <div class="flex space-x-3 pt-2">
         <button onclick="closeDeleteModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">取消</button>
-        <button id="confirmDeleteBtn" class="w-1/2 bg-rose-500 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-rose-600 transition-transform active:scale-[0.98]">確定撤銷</button>
+        <button id="confirmDeleteBtn" onclick="executeDelete()" class="w-1/2 bg-rose-500 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-rose-600 transition-transform active:scale-[0.98]">確定撤銷</button>
       </div>
     </div>
   </div>
@@ -257,9 +257,9 @@
     let localSupportedCurrencies = new Set(), localDefaultCurrency = "TWD";
     let isShowingNewCurrencyInput = false;
     let localCustomRates = {};
-    let localAlias = ""; // 儲存本團分身暱稱
+    let localAlias = ""; 
+    let isSyncComplete = false; // 判斷背景雙軌是否完成同步
 
-    // 核心安全修復 (Defensive Guard)：阻斷 Intervention 造成整個事件監聽器暴斃
     const hapticVibrate = (pattern) => { 
       try {
         if (navigator.vibrate) navigator.vibrate(pattern); 
@@ -274,7 +274,7 @@
       const bgColors = { success: 'bg-emerald-600', error: 'bg-rose-600', info: 'bg-gray-800' };
       const icons = { success: '✅', error: '⚠️', info: 'ℹ️' };
       toast.className = `${bgColors[type]} text-white px-4 py-3 rounded-xl shadow-lg text-sm font-bold flex items-center space-x-2 toast-enter pointer-events-auto`;
-      toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+      toast.innerHTML = `<span>` + icons[type] + `</span><span>` + message + `</span>`;
       container.appendChild(toast);
       requestAnimationFrame(() => { toast.classList.add('toast-enter-active'); toast.classList.remove('toast-enter'); });
       setTimeout(() => { toast.classList.add('toast-exit'); toast.classList.remove('toast-enter-active'); setTimeout(() => toast.remove(), 200); }, 3000);
@@ -344,14 +344,14 @@
       }
     }
 
-    function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
+    function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/` + MY_LIFF_ID + `?tripId=` + tId; }
 
     function buildFilterHtml(type, list, selectedArr) {
-      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
+      let html = `<button type="button" onclick="toggleFilter('` + type + `', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ` + (selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500') + `">全部</button>`;
       list.forEach(item => {
         let display = (type==='date') ? item.slice(5) : item;
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
+        html += `<button type="button" onclick="toggleFilter('` + type + `', '` + item + `')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ` + (isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500') + `">` + display + `</button>`;
       });
       return html;
     }
@@ -388,7 +388,7 @@
 
         if (inDate && inPayer && inSplitter) {
           totalTwdSum += exp.twdAmount;
-          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(', ');
+          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">` + k + `:</span><span class="font-mono tabular-nums text-gray-700">` + v + `</span>`).join(', ');
           
           htmlOutput += `
             <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow">
@@ -419,7 +419,7 @@
     function promptDelete(id, date, desc, amount, currency, tripId) {
       hapticVibrate([50, 50]);
       pendingDeleteId = id; pendingTripId = tripId;
-      document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${amount.toLocaleString()} ${currency}`;
+      document.getElementById('deleteTargetDesc').innerText = `日期：` + date + `\n項目：` + desc + `\n金額：` + amount.toLocaleString() + ` ` + currency;
       document.getElementById('deleteModal').classList.remove('hidden'); 
     }
     function closeDeleteModal() { pendingDeleteId = null; pendingTripId = null; document.getElementById('deleteModal').classList.add('hidden'); }
@@ -435,7 +435,7 @@
         if (result.status === "success") {
            showToast("撤銷成功", "success");
            let targetDesc = document.getElementById('deleteTargetDesc').innerText;
-           await liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${targetDesc}` }]);
+           await liff.sendMessages([{ type: 'text', text: `🗑️ ` + (localAlias || currentUserProfile.displayName) + ` 撤銷了一筆帳目\n\n` + targetDesc }]);
            setTimeout(() => liff.closeWindow(), 1000); 
         } else throw new Error();
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false; }
@@ -460,9 +460,9 @@
            let canDelete = !involved.has(name) && name !== localAlias; 
            html += `
              <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
-                 <span class="text-sm font-medium text-gray-700">${name}</span>
+                 <span class="text-sm font-medium text-gray-700">` + name + `</span>
                  ${canDelete ? 
-                     `<button type="button" onclick="promptRemoveMember('${name}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
+                     `<button type="button" onclick="promptRemoveMember('` + name + `')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
                      `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">無法移除(有關聯)</span>`
                  }
              </div>`;
@@ -509,11 +509,11 @@
           let stateClass = '';
           if (c === localDefaultCurrency) stateClass = 'default';
           else if (localSupportedCurrencies.has(c)) stateClass = 'selected';
-          html += `<button type="button" onclick="handleChipClick('${c}')" class="chip-btn ${stateClass}">${c}</button>`;
+          html += `<button type="button" onclick="handleChipClick('` + c + `')" class="chip-btn ` + stateClass + `">` + c + `</button>`;
        });
        
        let twdClass = (localDefaultCurrency === 'TWD') ? 'default' : (localSupportedCurrencies.has('TWD') ? 'selected' : '');
-       html = `<button type="button" onclick="handleChipClick('TWD')" class="chip-btn ${twdClass}">TWD</button>` + html;
+       html = `<button type="button" onclick="handleChipClick('TWD')" class="chip-btn ` + twdClass + `">TWD</button>` + html;
        html += `<button type="button" onclick="toggleNewCurrencyArea()" class="chip-btn border-dashed border-gray-300 text-gray-400">➕ 自訂</button>`;
        area.innerHTML = html;
 
@@ -558,34 +558,52 @@
         isShowingNewCurrencyInput = false;
 
         renderCurrencyChips();
-        showToast(`已新增並套用 ${code}`, "success");
+        showToast(`已新增並套用 ` + code, "success");
     }
 
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
-    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
+    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ` + CURRENT_RATE + ` TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
 
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
 
     function renderSplitDetailAdd() {
       const mode = document.getElementById('splitModeSelect').value; const currency = document.getElementById('currencySelect').value;
-      const container = document.getElementById('splitDetailContainer'); container.innerHTML = ""; if (MEMBER_LIST.length === 0) return;
+      const container = document.getElementById('splitDetailContainer'); 
+      
+      // 雙軌最佳化防禦：若背景同步尚未回包，不執行覆寫性重置，確保打字流不中斷
+      if (MEMBER_LIST.length === 0) return;
 
+      // 智慧型非破壞性 Diff 渲染：保留勾選與數值狀態
+      let stateBackup = {};
+      Array.from(container.children).forEach(child => {
+         let pName = child.querySelector('span')?.innerText;
+         if(pName) {
+            let cb = child.querySelector('.split-checkbox');
+            let inp = child.querySelector('.split-input');
+            stateBackup[pName] = { checked: cb ? cb.checked : true, value: inp ? inp.value : "" };
+         }
+      });
+
+      container.innerHTML = "";
       MEMBER_LIST.forEach(name => {
         const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 h-10 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
+        let backup = stateBackup[name] || { checked: true, value: "" };
+
         if (mode === "EQUAL") { 
           row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-teal-50'); 
-          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" checked></div>`; 
+          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="` + name + `" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" ` + (backup.checked ? 'checked' : '') + `></div>`; 
         } 
         else if (mode === "EXACT") { 
-          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
+          inputHtml = `<div class="flex items-center"><input type="text" data-name="` + name + `" inputmode="decimal" value="` + backup.value + `" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">` + currency + `</span></div>`; 
         } 
         else if (mode === "SHARE") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
+          let shareVal = backup.value || "1";
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="` + name + `" inputmode="decimal" value="` + shareVal + `" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
         } 
         else if (mode === "PERCENT") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="` + name + `" inputmode="decimal" value="` + backup.value + `" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
         }
-        row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">${name}</span>${inputHtml}`; container.appendChild(row);
+        row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">` + name + `</span>` + inputHtml; container.appendChild(row);
       });
     }
 
@@ -593,46 +611,65 @@
       const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0; const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
       
-      btn.disabled = true; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
+      btn.disabled = false; // 永遠允許點擊，若未同步完成由點擊攔截處理
       
       if (rawAmount <= 0) { 
-        statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`; btn.innerText = "🔒 請輸入有效金額"; 
+        statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`; 
+        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
+        btn.innerText = "🔒 請輸入有效金額"; 
         Array.from(rows).forEach(row => { const res = row.querySelector('.live-result'); if(res) res.innerText = ""; }); 
         return; 
       }
+
+      if(!isSyncComplete) {
+         statusBar.innerHTML = `<span class="text-teal-600 animate-pulse">⏳ 正在與資料庫安全校準...</span>`;
+         btn.className = "w-full bg-teal-500 text-white font-bold text-base rounded-xl py-3 shadow-md animate-pulse";
+         btn.innerText = "⏳ 正在對齊數據...";
+         return;
+      }
+
+      btn.className = "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
 
       if (mode === "EQUAL") {
         const checked = document.querySelectorAll('.split-checkbox:checked'); if (checked.length === 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象"; return; }
         let base = Math.floor(rawAmount / checked.length); let residue = rawAmount - (base * checked.length); let cIdx = 0;
         Array.from(rows).forEach(row => { const cb = row.querySelector('.split-checkbox'); const res = row.querySelector('.live-result'); if (cb && cb.checked) { let val = base + (cIdx === checked.length - 1 ? residue : 0); res.innerText = `${val.toLocaleString()}`; cIdx++; } else if (res) { res.innerText = "-"; } });
-        statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-teal-600', 'text-white', 'hover:bg-teal-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500');
+        statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; btn.innerText = "💾 儲存並同步至群組";
       } 
       else if (mode === "EXACT") {
         let currentForeignSum = 0; document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value) || 0)); let diff = rawAmount - currentForeignSum;
-        
-        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-teal-600', 'text-white', 'hover:bg-teal-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500'); } 
+        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.innerText = "💾 儲存並同步至群組"; } 
         else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
         else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 金額超出`; }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
         let totalMetric = 0; document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value) || 0));
         if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`; return; }
-        
-        if (mode === "PERCENT") {
-            if (Math.abs(totalMetric - 100) > 0.01) { 
-                statusBar.innerHTML = `<span class="text-teal-500">目前計 ${totalMetric}%</span>`; btn.innerText = `🔒 比例須等於 100%`; 
-                if(totalMetric > 100) { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${totalMetric}%</span>`; }
-                return; 
-            }
+        if (mode === "PERCENT" && Math.abs(totalMetric - 100) > 0.01) { 
+            statusBar.innerHTML = `<span class="text-teal-500">目前計 ${totalMetric}%</span>`; btn.innerText = `🔒 比例須等於 100%`; 
+            return; 
         }
-
         let calculatedSum = 0; let inputs = document.querySelectorAll('.split-input');
         inputs.forEach((input, idx) => { let val = parseFloat(input.value) || 0; let assigned = Math.floor(rawAmount * (val / totalMetric)); calculatedSum += assigned; if (idx === inputs.length - 1) assigned += (rawAmount - calculatedSum); const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result'); if(res) res.innerText = `${assigned.toLocaleString()}`; });
-        statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-teal-600', 'text-white', 'hover:bg-teal-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500');
+        statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.innerText = "💾 儲存並同步至群組";
       }
     }
 
     async function submitMainAction() {
+       // 神速單指流阻斷防線 (Race Condition Hijacker)
+       if (!isSyncComplete && currentTab === 'add') {
+          hapticVibrate([100, 50, 100]);
+          const btn = document.getElementById('submitBtn');
+          btn.innerText = "⏳ 同步帳目中，請稍候...";
+          // 利用輪詢等待背景線程回包
+          let checkInterval = setInterval(() => {
+              if (isSyncComplete) {
+                 clearInterval(checkInterval);
+                 submitExpense();
+              }
+          }, 300);
+          return;
+       }
        if (currentTab === 'add') submitExpense();
        else if (currentTab === 'settings') submitSettings();
     }
@@ -642,7 +679,6 @@
       const name = document.getElementById('setTripName').value.trim();
       const start = document.getElementById('setStartDate').value.replace(/-/g, '/');
       const end = document.getElementById('setEndDate').value.replace(/-/g, '/');
-      
       let curStr = Array.from(localSupportedCurrencies).join(', ').toUpperCase();
       let defCur = localDefaultCurrency;
       const agree = document.getElementById('agreeCloseCb').checked;
@@ -661,69 +697,73 @@
            customRates: localCustomRates 
         };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
-        
         if (result.status === "success") {
            showToast("設定儲存成功！", "success");
+           // 成功寫入後同步洗滌本地快取
+           localStorage.removeItem("nomad_cache_" + currentTripId);
            if (IS_DRAFT) {
              const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
-             await liff.sendMessages([
-               {
-                 type: 'flex',
-                 altText: `開啟帳本｜${name}`,
+             await liff.sendMessages([{
+                 type: 'flex', altText: `開啟帳本｜` + name,
                  contents: {
                    type: 'bubble', size: 'kilo',
                    body: {
                      type: 'box', layout: 'vertical', backgroundColor: '#FFFDF8',
                      contents: [
-                       { type: 'text', text: `✈️ ${name}`, weight: 'bold', size: 'lg' },
-                       { type: 'text', text: `📅 ${start || '未設定'} ~ ${end || '未設定'}`, size: 'sm', color: '#888888', margin: 'md' },
-                       { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
+                       { type: 'text', text: `✈️ ` + name, weight: 'bold', size: 'lg' },
+                       { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' }
                      ]
                    },
-                   footer: {
-                     type: 'box', layout: 'vertical',
-                     contents: [
-                       { type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }
-                     ]
-                   }
+                   footer: { type: 'box', layout: 'vertical', contents: [{ type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }] }
                  }
-               }
-             ]);
+             }]);
              setTimeout(() => liff.closeWindow(), 1000);
            } else {
              setTimeout(()=> window.location.reload(), 800);
            }
         } else throw new Error(result.message);
-      } catch (e) { showToast(e.message, "error"); hibrate = hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
+      } catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
     }
 
     async function submitExpense() {
-      if (IS_ARCHIVED) { showToast("已封存旅程無法新增帳目", "error"); hapticVibrate([50, 50, 50]); return; }
+      if (IS_ARCHIVED) return showToast("已封存旅程無法新增帳目", "error");
+      
+      const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0;
+      const mode = document.getElementById('splitModeSelect').value;
+      if (rawAmount <= 0) return showToast("請輸入有效金額", "error");
+
+      // 安全卡驗：再次核驗平衡狀態
+      if (mode === "EXACT") {
+         let sum = 0; document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
+         if (Math.abs(rawAmount - sum) > 0.1) return showToast("分帳總額不平衡", "error");
+      }
+
       hapticVibrate(50);
-      const btn = document.getElementById('submitBtn'); const desc = document.getElementById('descInput').value.trim(); const rawAmount = parseFloat(document.getElementById('amountInput').value); const currency = document.getElementById('currencySelect').value; const splitMode = document.getElementById('splitModeSelect').value;
+      const btn = document.getElementById('submitBtn'); const desc = document.getElementById('descInput').value.trim(); const currency = document.getElementById('currencySelect').value;
       const selectedPayerName = document.getElementById('payerSelect').value;
       const totalTwd = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); let splitDetailObj = {};
       
-      if (splitMode === "EQUAL") { const checkboxes = document.querySelectorAll('.split-checkbox:checked'); let base = Math.floor(totalTwd / checkboxes.length); let residue = totalTwd - (base * checkboxes.length); checkboxes.forEach((cb, idx) => { let name = cb.getAttribute('data-name'); splitDetailObj[name] = base + (idx === checkboxes.length - 1 ? residue : 0); }); } 
-      else if (splitMode === "EXACT") { const inputs = document.querySelectorAll('.split-input'); inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); splitDetailObj[name] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); }); let calculatedTwdSum = Object.values(splitDetailObj).reduce((a, b) => a + b, 0); let residue = totalTwd - calculatedTwdSum; const lastPerson = Array.from(inputs).pop().getAttribute('data-name'); if(residue !== 0) splitDetailObj[lastPerson] += residue; } 
-      else if (splitMode === "SHARE" || splitMode === "PERCENT") { const inputs = document.querySelectorAll('.split-input'); let totalMetric = 0, metricMap = {}; inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); metricMap[name] = val; totalMetric += val; }); let calculatedSum = 0; MEMBER_LIST.forEach(name => { splitDetailObj[name] = Math.round(totalTwd * (metricMap[name] / totalMetric)); calculatedSum += splitDetailObj[name]; }); let residue = totalTwd - calculatedSum; if(residue !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residue; }
+      if (mode === "EQUAL") { const checkboxes = document.querySelectorAll('.split-checkbox:checked'); let base = Math.floor(totalTwd / checkboxes.length); let residue = totalTwd - (base * checkboxes.length); checkboxes.forEach((cb, idx) => { let name = cb.getAttribute('data-name'); splitDetailObj[name] = base + (idx === checkboxes.length - 1 ? residue : 0); }); } 
+      else if (mode === "EXACT") { const inputs = document.querySelectorAll('.split-input'); inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); splitDetailObj[name] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); }); let calculatedTwdSum = Object.values(splitDetailObj).reduce((a, b) => a + b, 0); let residue = totalTwd - calculatedTwdSum; const lastPerson = Array.from(inputs).pop().getAttribute('data-name'); if(residue !== 0) splitDetailObj[lastPerson] += residue; } 
+      else if (mode === "SHARE" || mode === "PERCENT") { const inputs = document.querySelectorAll('.split-input'); let totalMetric = 0, metricMap = {}; inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); metricMap[name] = val; totalMetric += val; }); let calculatedSum = 0; MEMBER_LIST.forEach(name => { splitDetailObj[name] = Math.round(totalTwd * (metricMap[name] / totalMetric)); calculatedSum += splitDetailObj[name]; }); let residue = totalTwd - calculatedSum; if(residue !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residue; }
 
       btn.disabled = true; btn.innerText = "⏳ 儲存交易中...";
       try {
-        const payload = { action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: currentUserProfile.userId, payerName: selectedPayerName, description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: splitMode, splitDetailString: JSON.stringify(splitDetailObj) };
+        const payload = { action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: currentUserProfile.userId, payerName: selectedPayerName, description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, splitDetailString: JSON.stringify(splitDetailObj) };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("儲存成功！", "success");
+          localStorage.removeItem("nomad_cache_" + currentTripId); // 震盪清洗舊快取
           
           let detailArr = []; const rows = document.getElementById('splitDetailContainer').children;
           Array.from(rows).forEach(row => { 
             let name = row.querySelector('span.font-medium').innerText; let val = 0;
-            if (splitMode === "EXACT") { val = parseFloat(row.querySelector('.split-input').value) || 0; } 
+            if (mode === "EXACT") { val = parseFloat(row.querySelector('.split-input').value) || 0; } 
             else { 
               let resSpan = row.querySelector('.live-result'); 
               if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
             }
-            if(val > 0) detailArr.push(`${name} ${val.toLocaleString()}`); 
+            if(val > 0) detailArr.push(name + ` ` + val.toLocaleString()); 
           });
           const detailText = detailArr.join("｜");
           
@@ -731,7 +771,7 @@
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
-      } catch (err) { showToast("網路通訊錯誤，請重試", "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; }
+      } catch (err) { showToast("網絡通訊錯誤，請重試", "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; }
     }
 
     async function sendInviteLink() {
@@ -741,51 +781,36 @@
          const start = document.getElementById('setStartDate').value.replace(/-/g, '/');
          const end = document.getElementById('setEndDate').value.replace(/-/g, '/');
          const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
-
          if (!name) return showToast("旅程名稱不可為空", "error");
 
-         await liff.sendMessages([
-           {
-             type: 'flex',
-             altText: `開啟帳本｜${name}`,
+         await liff.sendMessages([{
+             type: 'flex', altText: `開啟帳本｜` + name,
              contents: {
                type: 'bubble', size: 'kilo',
                body: {
                  type: 'box', layout: 'vertical', backgroundColor: '#FFFDF8',
                  contents: [
-                   { type: 'text', text: `✈️ ${name}`, weight: 'bold', size: 'lg' },
-                   { type: 'text', text: `📅 ${start || '未設定'} ~ ${end || '未設定'}`, size: 'sm', color: '#888888', margin: 'md' },
-                   { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
+                   { type: 'text', text: `✈️ ` + name, weight: 'bold', size: 'lg' },
+                   { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' }
                  ]
                },
-               footer: {
-                 type: 'box', layout: 'vertical',
-                 contents: [
-                   { type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }
-                 ]
-               }
+               footer: { type: 'box', layout: 'vertical', contents: [{ type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }] }
              }
-           }
-         ]);
-         showToast("已將帳本重發至群組", "success");
+         }]);
+         showToast("已將帳本卡片重發至群組", "success");
       } catch(e) { showToast("發送失敗", "error"); }
     }
 
-    function promptArchiveTrip() {
-      hapticVibrate(50);
-      document.getElementById('archiveModal').classList.remove('hidden');
-    }
-    function closeArchiveModal() {
-      document.getElementById('archiveModal').classList.add('hidden');
-    }
+    function promptArchiveTrip() { hapticVibrate(50); document.getElementById('archiveModal').classList.remove('hidden'); }
+    function closeArchiveModal() { document.getElementById('archiveModal').classList.add('hidden'); }
     async function archiveTrip() {
-      closeArchiveModal();
-      hapticVibrate([50,50]);
+      closeArchiveModal(); hapticVibrate([50,50]);
       try {
         const payload = { action: "archiveTrip", tripId: currentTripId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
            showToast("結團成功！", "success");
+           localStorage.removeItem("nomad_cache_" + currentTripId);
            const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
            await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n[系統結算時間：${nowStr}]\n歷史紀錄仍可檢視。` }]);
            setTimeout(() => liff.closeWindow(), 1000);
@@ -796,14 +821,13 @@
     async function submitRegistration() {
       const nickname = document.getElementById('realNameInput').value.trim();
       if (!nickname) { showToast("請輸入暱稱", "error"); return; }
-      const btn = document.getElementById('registerBtn');
-      btn.disabled = true; btn.innerText = "註冊中...";
+      const btn = document.getElementById('registerBtn'); btn.disabled = true; btn.innerText = "註冊中...";
       try {
         const payload = { action: "registerUser", tripId: currentTripId, userId: currentUserProfile.userId, realName: nickname };
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const result = await res.json();
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("註冊成功", "success");
+          localStorage.removeItem("nomad_cache_" + currentTripId);
           setTimeout(() => window.location.reload(), 500);
         } else { throw new Error(result.message); }
       } catch (e) { showToast(e.message, "error"); btn.disabled = false; btn.innerText = "完成註冊並進入"; }
@@ -817,25 +841,52 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         currentTripId = urlParams.get('tripId') || "null"; 
-        
         const ctx = liff.getContext();
         currentGroupId = ctx?.groupId || ctx?.roomId || "ONLINE_TEST"; 
         
-        // 性能特化 (Performance Optimization)：拔除 liff.getProfile() 網絡請求開銷，改採記憶體內置解碼
+        // 從隱形 Token 抽取基本 DisplayName
         const idToken = liff.getDecodedIDToken();
         currentUserProfile = {
           userId: ctx?.userId || liff.getContext()?.userId || "UNKNOWN_USER",
           displayName: idToken?.name || "User"
         };
 
+        // 🟢 [時間差核心]：若具備歷史快取，進行 0.1 秒極速先導渲染
+        const rawCache = localStorage.getItem("nomad_cache_" + currentTripId);
+        if (rawCache && currentTripId !== "null") {
+           try {
+              const cachedData = JSON.parse(rawCache);
+              applyServerDataToUI(cachedData, true); // 弱渲染啟動
+              console.log("Stale-While-Revalidate: Seed cache hit.");
+           } catch(cacheErr) { localStorage.removeItem("nomad_cache_" + currentTripId); }
+        }
+
+        // 背景併發管道啟動 (Google 302 Tunneling in background)
         const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
 
-        statusLight.classList.replace('bg-yellow-400', 'bg-emerald-500'); statusLight.classList.remove('animate-pulse');
-
         if (result.status === "error") { throwFatalError("存取遭拒", result.message); return; }
 
+        // 備份最新封包至本地快取
+        if (result.status === "success") {
+           localStorage.setItem("nomad_cache_" + currentTripId, JSON.stringify(result));
+        }
+
+        // 將最新實體數據安全注入 UI (非破壞性校準)
+        applyServerDataToUI(result, false);
+
+      } catch (err) { 
+        statusLight.classList.replace('bg-yellow-400', 'bg-rose-500'); 
+        statusLight.classList.remove('animate-pulse'); 
+        throwFatalError("安全閘口中斷", err.message || "通訊失敗"); 
+      }
+    }
+
+    // 業務層與視圖層解耦模組 (UI Hydration Engine)
+    function applyServerDataToUI(result, isWeakSeed) {
+        const statusLight = document.getElementById('statusLight');
+        
         const renderTripCard = (t, statusClass, statusText) => `
           <div onclick="navigateToTrip('${t.id}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group overflow-hidden">
             <div class="absolute inset-0 bg-teal-50 opacity-0 group-active:opacity-100 transition-opacity"></div>
@@ -852,7 +903,7 @@
         `;
 
         if (result.status === "dashboard") {
-          document.getElementById('tripNameDisplay').innerText = `總控台 (Hi, ${result.suggestedName || currentUserProfile.displayName})`;
+          document.getElementById('tripNameDisplay').innerText = `總控台 (Hi, ` + (result.suggestedName || currentUserProfile.displayName) + `)`;
           let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-emerald-50 text-emerald-600 border border-emerald-100", "記錄中")).join('');
           if (result.canCreate) {
              html = `<button onclick="switchTab('settings')" class="w-full bg-teal-50 border border-teal-200 text-teal-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-teal-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
@@ -860,13 +911,13 @@
           }
           document.getElementById('dashboardActive').innerHTML = html;
           document.getElementById('dashboardArchived').innerHTML = result.archivedTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">無歷史封存記錄</p>` : result.archivedTrips.map(t => renderTripCard(t, "bg-gray-100 text-gray-500 border border-gray-200", "歷史封存")).join('');
+          if(!isWeakSeed) { statusLight.classList.replace('bg-yellow-400', 'bg-emerald-500'); statusLight.classList.remove('animate-pulse'); }
           switchTab('dashboard'); return;
         }
 
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
             document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName; 
-            document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（5個字內）。";
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
           
@@ -883,21 +934,13 @@
           localSupportedCurrencies = new Set([...tempSet].filter(c => RATE_MATRIX[c] || c === 'TWD'));
           
           localDefaultCurrency = result.defaultCurrency || "TWD";
-          if (localDefaultCurrency !== 'TWD' && !RATE_MATRIX[localDefaultCurrency]) {
-              localDefaultCurrency = 'TWD';
-          }
+          if (localDefaultCurrency !== 'TWD' && !RATE_MATRIX[localDefaultCurrency]) { localDefaultCurrency = 'TWD'; }
           localSupportedCurrencies.add(localDefaultCurrency);
 
           let tabsHtml = '';
-          if (!IS_DRAFT && !IS_ARCHIVED) {
-             tabsHtml += `<div data-tab="add" onclick="switchTab('add')" class="tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">✏️ 記一筆帳</div>`;
-          }
-          if (!IS_DRAFT) {
-             tabsHtml += `<div data-tab="history" onclick="switchTab('history')" class="tab-btn ${IS_ARCHIVED ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">📜 帳務明細</div>`;
-          }
-          if (IS_CREATOR || IS_DRAFT) {
-             tabsHtml += `<div data-tab="settings" onclick="switchTab('settings')" class="tab-btn ${IS_DRAFT ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">⚙️ 旅程管理</div>`;
-          }
+          if (!IS_DRAFT && !IS_ARCHIVED) tabsHtml += `<div data-tab="add" onclick="switchTab('add')" class="tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">✏️ 記一筆帳</div>`;
+          if (!IS_DRAFT) tabsHtml += `<div data-tab="history" onclick="switchTab('history')" class="tab-btn ${IS_ARCHIVED ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">📜 帳務明細</div>`;
+          if (IS_CREATOR || IS_DRAFT) tabsHtml += `<div data-tab="settings" onclick="switchTab('settings')" class="tab-btn ${IS_DRAFT ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">⚙️ 旅程管理</div>`;
           document.getElementById('tabContainer').innerHTML = tabsHtml;
 
           if (IS_CREATOR || IS_DRAFT) {
@@ -905,13 +948,11 @@
              if(result.startDate) document.getElementById('setStartDate').value = result.startDate.replace(/\//g, '-');
              if(result.endDate) document.getElementById('setEndDate').value = result.endDate.replace(/\//g, '-');
              renderCurrencyChips();
-             
-             if(!IS_DRAFT) {
+             if(!IS_DRAFT && !isWeakSeed) {
                 document.getElementById('activeSettingsArea').classList.remove('hidden');
-                const cb = document.getElementById('agreeCloseCb');
-                const label = document.getElementById('agreeCloseLabel');
-                cb.checked = true; cb.disabled = true;
-                label.classList.add('opacity-50', 'pointer-events-none');
+                document.getElementById('agreeCloseCb').checked = true;
+                document.getElementById('agreeCloseCb').disabled = true;
+                document.getElementById('agreeCloseLabel').classList.add('opacity-50', 'pointer-events-none');
                 renderMembersManagement(); 
              }
           }
@@ -919,46 +960,56 @@
           if (IS_DRAFT) {
              document.getElementById('tripNameDisplay').innerText = `✏️ 旅遊帳本申請`;
              document.getElementById('tabContainer').style.display = 'flex';
+             if(!isWeakSeed) { statusLight.classList.replace('bg-yellow-400', 'bg-emerald-500'); statusLight.classList.remove('animate-pulse'); }
              switchTab('settings'); return;
           }
 
           CURRENT_RATE = RATE_MATRIX[localDefaultCurrency] || 1.0;
           const payerSel = document.getElementById('payerSelect');
-          payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">${m}</option>`).join('');
-          if (result.suggestedName && MEMBER_LIST.includes(result.suggestedName)) { payerSel.value = result.suggestedName; }
+          
+          // 備份當取付款人選取項
+          let prevSelectedPayer = payerSel.value;
+          payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">` + m + `</option>`).join('');
+          if(MEMBER_LIST.includes(prevSelectedPayer)) payerSel.value = prevSelectedPayer;
+          else if (result.suggestedName && MEMBER_LIST.includes(result.suggestedName)) { payerSel.value = result.suggestedName; }
           
           const curSelect = document.getElementById('currencySelect');
-          curSelect.innerHTML = Array.from(localSupportedCurrencies).map(c => `<option value="${c}">${c}</option>`).join('');
-          curSelect.value = localDefaultCurrency; 
+          let prevSelectedCur = curSelect.value;
+          curSelect.innerHTML = Array.from(localSupportedCurrencies).map(c => `<option value="${c}">` + c + `</option>`).join('');
+          curSelect.value = prevSelectedCur || localDefaultCurrency; 
 
-          document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
+          document.getElementById('rateDisplay').innerText = `(1 : ` + CURRENT_RATE + ` TWD)`;
           document.getElementById('tripNameDisplay').innerHTML =
-            `${IS_ARCHIVED ? '📦' : '✈️'} ${result.tripName}
+            `${IS_ARCHIVED ? '📦' : '✈️'} ` + result.tripName + `
              <span class="text-[11px] text-gray-400 font-normal ml-1">
-               ${result.startDate} ~ ${result.endDate}
+               ` + result.startDate + ` ~ ` + result.endDate + `
              </span>`;
           
           document.getElementById('tabContainer').style.display = 'flex';
-          initHistoryFilters(); renderSplitDetailAdd(); 
+          initHistoryFilters(); 
+          renderSplitDetailAdd(); // 非破壞性填入
           
-          if (IS_ARCHIVED) { switchTab('history'); } 
-          else { switchTab('add'); }
-        } else throw new Error(result.message || "連線失敗");
-      } catch (err) { statusLight.classList.replace('bg-yellow-400', 'bg-rose-50'); statusLight.classList.remove('animate-pulse'); showToast("系統阻斷：" + err.message, "error"); hapticVibrate([50, 50, 50]); }
+          if(!isWeakSeed) {
+             isSyncComplete = true; // 解鎖實體計算
+             statusLight.classList.replace('bg-yellow-400', 'bg-emerald-500'); 
+             statusLight.classList.remove('animate-pulse');
+          }
+          
+          calculateLivePreview();
+          if (currentTab === 'dashboard') {
+             if (IS_ARCHIVED) switchTab('history'); else switchTab('add');
+          }
+        }
     }
 
-    // 事件監聽掛載校準 (Event Listener Scope Calibration)
+    // 事件監聽掛載校準 (Hoisted DOM Click Guard)
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('.split-mode-btn');
       if(!btn) return;
-      
       hapticVibrate(20);
-
       document.querySelectorAll('.split-mode-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
       document.getElementById('splitModeSelect').value = btn.dataset.mode;
-
       renderSplitDetailAdd();
       calculateLivePreview();
     });
