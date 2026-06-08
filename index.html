@@ -694,7 +694,7 @@
              setTimeout(()=> window.location.reload(), 800);
            }
         } else throw new Error(result.message);
-      } catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "🚀 確認開團並公告" : "💾 儲存修改"; }
+      } catch (e) { showToast(e.message, "error"); hibrate = hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
     }
 
     async function submitExpense() {
