@@ -710,7 +710,7 @@
         if (result.status === "success") {
           showToast("儲存成功！", "success");
           
-          let detailText = ""; const rows = document.getElementById('splitDetailContainer').children;
+          let detailArr = []; const rows = document.getElementById('splitDetailContainer').children;
           Array.from(rows).forEach(row => { 
             let name = row.querySelector('span.font-medium').innerText; let val = 0;
             if (splitMode === "EXACT") { val = parseFloat(row.querySelector('.split-input').value) || 0; } 
@@ -718,11 +718,12 @@
               let resSpan = row.querySelector('.live-result'); 
               if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
             }
-            if(val > 0) detailText += ` ${name} ${val.toLocaleString()}、 `; 
+            if(val > 0) detailArr.push(`${name} ${val.toLocaleString()}`); 
           });
+          const detailText = detailArr.join("｜");
           
           // V22.2 Alias 本體映射
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()} \n👤 ${selectedPayerName} 付\n\n明細：\n${detailText}`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n明細：\n${detailText}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
