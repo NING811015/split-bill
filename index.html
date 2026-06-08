@@ -258,7 +258,7 @@
     let isShowingNewCurrencyInput = false;
     let localCustomRates = {};
     let localAlias = ""; 
-    let isSyncComplete = false; // 判斷背景雙軌是否完成同步
+    let isSyncComplete = false; 
 
     const hapticVibrate = (pattern) => { 
       try {
@@ -570,10 +570,8 @@
       const mode = document.getElementById('splitModeSelect').value; const currency = document.getElementById('currencySelect').value;
       const container = document.getElementById('splitDetailContainer'); 
       
-      // 雙軌最佳化防禦：若背景同步尚未回包，不執行覆寫性重置，確保打字流不中斷
       if (MEMBER_LIST.length === 0) return;
 
-      // 智慧型非破壞性 Diff 渲染：保留勾選與數值狀態
       let stateBackup = {};
       Array.from(container.children).forEach(child => {
          let pName = child.querySelector('span')?.innerText;
@@ -611,7 +609,7 @@
       const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0; const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
       
-      btn.disabled = false; // 永遠允許點擊，若未同步完成由點擊攔截處理
+      btn.disabled = false; 
       
       if (rawAmount <= 0) { 
         statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`; 
@@ -656,12 +654,10 @@
     }
 
     async function submitMainAction() {
-       // 神速單指流阻斷防線 (Race Condition Hijacker)
        if (!isSyncComplete && currentTab === 'add') {
           hapticVibrate([100, 50, 100]);
           const btn = document.getElementById('submitBtn');
           btn.innerText = "⏳ 同步帳目中，請稍候...";
-          // 利用輪詢等待背景線程回包
           let checkInterval = setInterval(() => {
               if (isSyncComplete) {
                  clearInterval(checkInterval);
@@ -699,7 +695,6 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
            showToast("設定儲存成功！", "success");
-           // 成功寫入後同步洗滌本地快取
            localStorage.removeItem("nomad_cache_" + currentTripId);
            if (IS_DRAFT) {
              const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
@@ -712,7 +707,7 @@
                      contents: [
                        { type: 'text', text: `✈️ ` + name, weight: 'bold', size: 'lg' },
                        { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' },
-                       { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
+                       { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
                      ]
                    },
                    footer: { type: 'box', layout: 'vertical', contents: [{ type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }] }
@@ -733,7 +728,6 @@
       const mode = document.getElementById('splitModeSelect').value;
       if (rawAmount <= 0) return showToast("請輸入有效金額", "error");
 
-      // 安全卡驗：再次核驗平衡狀態
       if (mode === "EXACT") {
          let sum = 0; document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
          if (Math.abs(rawAmount - sum) > 0.1) return showToast("分帳總額不平衡", "error");
@@ -754,7 +748,7 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("儲存成功！", "success");
-          localStorage.removeItem("nomad_cache_" + currentTripId); // 震盪清洗舊快取
+          localStorage.removeItem("nomad_cache_" + currentTripId); 
           
           let detailArr = []; const rows = document.getElementById('splitDetailContainer').children;
           Array.from(rows).forEach(row => { 
@@ -792,8 +786,7 @@
                  type: 'box', layout: 'vertical', backgroundColor: '#FFFDF8',
                  contents: [
                    { type: 'text', text: `✈️ ` + name, weight: 'bold', size: 'lg' },
-                   { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' },
-                   { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
+                   { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' }
                  ]
                },
                footer: { type: 'box', layout: 'vertical', contents: [{ type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }] }
@@ -846,36 +839,30 @@
         const ctx = liff.getContext();
         currentGroupId = ctx?.groupId || ctx?.roomId || "ONLINE_TEST"; 
         
-        // 從隱形 Token 抽取基本 DisplayName
         const idToken = liff.getDecodedIDToken();
         currentUserProfile = {
           userId: ctx?.userId || liff.getContext()?.userId || "UNKNOWN_USER",
           displayName: idToken?.name || "User"
         };
 
-        // 🟢 [時間差核心]：若具備歷史快取，進行 0.1 秒極速先導渲染
         const rawCache = localStorage.getItem("nomad_cache_" + currentTripId);
         if (rawCache && currentTripId !== "null") {
            try {
               const cachedData = JSON.parse(rawCache);
-              applyServerDataToUI(cachedData, true); // 弱渲染啟動
-              console.log("Stale-While-Revalidate: Seed cache hit.");
+              applyServerDataToUI(cachedData, true);
            } catch(cacheErr) { localStorage.removeItem("nomad_cache_" + currentTripId); }
         }
 
-        // 背景併發管道啟動 (Google 302 Tunneling in background)
         const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
 
         if (result.status === "error") { throwFatalError("存取遭拒", result.message); return; }
 
-        // 備份最新封包至本地快取
         if (result.status === "success") {
            localStorage.setItem("nomad_cache_" + currentTripId, JSON.stringify(result));
         }
 
-        // 將最新實體數據安全注入 UI (非破壞性校準)
         applyServerDataToUI(result, false);
 
       } catch (err) { 
@@ -885,7 +872,6 @@
       }
     }
 
-    // 業務層與視圖層解耦模組 (UI Hydration Engine)
     function applyServerDataToUI(result, isWeakSeed) {
         const statusLight = document.getElementById('statusLight');
         
@@ -907,9 +893,15 @@
         if (result.status === "dashboard") {
           document.getElementById('tripNameDisplay').innerText = `總控台 (Hi, ` + (result.suggestedName || currentUserProfile.displayName) + `)`;
           let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-emerald-50 text-emerald-600 border border-emerald-100", "記錄中")).join('');
+          
           if (result.canCreate) {
-             html = `<button onclick="switchTab('settings')" class="w-full bg-teal-50 border border-teal-200 text-teal-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-teal-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
-             IS_CREATOR = true; IS_DRAFT = true; 
+             // 🟢 前端環境阻斷：拒絕從非群組開團
+             if (/^[CR]/.test(currentGroupId)) {
+                html = `<button onclick="switchTab('settings')" class="w-full bg-teal-50 border border-teal-200 text-teal-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-teal-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
+                IS_CREATOR = true; IS_DRAFT = true; 
+             } else {
+                html = `<div class="w-full bg-gray-50 border border-gray-200 text-gray-500 text-sm font-bold rounded-xl py-3 mb-4 shadow-sm flex items-center justify-center gap-2">⚠️ 請至實體 LINE 群組內輸入 /new 建立旅程</div>` + html;
+             }
           }
           document.getElementById('dashboardActive').innerHTML = html;
           document.getElementById('dashboardArchived').innerHTML = result.archivedTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">無歷史封存記錄</p>` : result.archivedTrips.map(t => renderTripCard(t, "bg-gray-100 text-gray-500 border border-gray-200", "歷史封存")).join('');
@@ -969,7 +961,6 @@
           CURRENT_RATE = RATE_MATRIX[localDefaultCurrency] || 1.0;
           const payerSel = document.getElementById('payerSelect');
           
-          // 備份當取付款人選取項
           let prevSelectedPayer = payerSel.value;
           payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">` + m + `</option>`).join('');
           if(MEMBER_LIST.includes(prevSelectedPayer)) payerSel.value = prevSelectedPayer;
@@ -989,10 +980,10 @@
           
           document.getElementById('tabContainer').style.display = 'flex';
           initHistoryFilters(); 
-          renderSplitDetailAdd(); // 非破壞性填入
+          renderSplitDetailAdd(); 
           
           if(!isWeakSeed) {
-             isSyncComplete = true; // 解鎖實體計算
+             isSyncComplete = true;
              statusLight.classList.replace('bg-yellow-400', 'bg-emerald-500'); 
              statusLight.classList.remove('animate-pulse');
           }
@@ -1004,7 +995,6 @@
         }
     }
 
-    // 事件監聽掛載校準 (Hoisted DOM Click Guard)
     document.addEventListener('click', function(e) {
       const btn = e.target.closest('.split-mode-btn');
       if(!btn) return;
