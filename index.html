@@ -151,7 +151,7 @@
         </label>
         
         <div id="memberManagementArea" class="border-t border-gray-100 pt-4 mt-4 hidden">
-          <h3 class="text-xs font-bold text-gray-500 mb-2">👥 團員管理</h3>
+          <h3 class="text-xs font-bold text-gray-500 mb-2">🧸 旅伴管理</h3>
           <div id="memberListContainer" class="space-y-2"></div>
         </div>
 
@@ -722,7 +722,7 @@
           });
           
           // V22.2 Alias 本體映射
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n (由 ${selectedPayerName} 付)\n--- 明細 ---${detailText}\n\n (by ${localAlias || currentUserProfile.displayName})\n`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n 👳 ${selectedPayerName} 付\n-------- 明細 --------${detailText}\n\n by ${localAlias || currentUserProfile.displayName}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
