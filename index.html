@@ -937,7 +937,24 @@
       } catch (err) { statusLight.classList.replace('bg-yellow-400', 'bg-rose-500'); statusLight.classList.remove('animate-pulse'); showToast("系統阻斷：" + err.message, "error"); hapticVibrate([50, 50, 50]); }
     }
 
-    initializeLiff();
+          document.addEventListener('click', function(e) {
+          const btn = e.target.closest('.split-mode-btn');
+          if(!btn) return;
+          hapticVibrate(20);
+
+          document.querySelectorAll('.split-mode-btn')
+          .forEach(b => b.classList.remove('active'));
+
+          btn.classList.add('active');
+
+          document.getElementById('splitModeSelect').value =
+          btn.dataset.mode;
+
+  renderSplitDetailAdd();
+  calculateLivePreview();
+});
+
+initializeLiff();
   </script>
 </body>
 </html>
