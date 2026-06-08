@@ -344,14 +344,14 @@
       }
     }
 
-    function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/` + MY_LIFF_ID + `?tripId=` + tId; }
+    function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
     function buildFilterHtml(type, list, selectedArr) {
-      let html = `<button type="button" onclick="toggleFilter('` + type + `', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ` + (selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500') + `">全部</button>`;
+      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
         let display = (type==='date') ? item.slice(5) : item;
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('` + type + `', '` + item + `')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ` + (isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500') + `">` + display + `</button>`;
+        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
       });
       return html;
     }
@@ -388,7 +388,7 @@
 
         if (inDate && inPayer && inSplitter) {
           totalTwdSum += exp.twdAmount;
-          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">` + k + `:</span><span class="font-mono tabular-nums text-gray-700">` + v + `</span>`).join(', ');
+          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(', ');
           
           htmlOutput += `
             <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow">
@@ -419,7 +419,7 @@
     function promptDelete(id, date, desc, amount, currency, tripId) {
       hapticVibrate([50, 50]);
       pendingDeleteId = id; pendingTripId = tripId;
-      document.getElementById('deleteTargetDesc').innerText = `日期：` + date + `\n項目：` + desc + `\n金額：` + amount.toLocaleString() + ` ` + currency;
+      document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${amount.toLocaleString()} ${currency}`;
       document.getElementById('deleteModal').classList.remove('hidden'); 
     }
     function closeDeleteModal() { pendingDeleteId = null; pendingTripId = null; document.getElementById('deleteModal').classList.add('hidden'); }
@@ -435,7 +435,7 @@
         if (result.status === "success") {
            showToast("撤銷成功", "success");
            let targetDesc = document.getElementById('deleteTargetDesc').innerText;
-           await liff.sendMessages([{ type: 'text', text: `🗑️ ` + (localAlias || currentUserProfile.displayName) + ` 撤銷了一筆帳目\n\n` + targetDesc }]);
+           await liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${targetDesc}` }]);
            setTimeout(() => liff.closeWindow(), 1000); 
         } else throw new Error();
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false; }
@@ -460,9 +460,9 @@
            let canDelete = !involved.has(name) && name !== localAlias; 
            html += `
              <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
-                 <span class="text-sm font-medium text-gray-700">` + name + `</span>
+                 <span class="text-sm font-medium text-gray-700">${name}</span>
                  ${canDelete ? 
-                     `<button type="button" onclick="promptRemoveMember('` + name + `')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
+                     `<button type="button" onclick="promptRemoveMember('${name}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
                      `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">無法移除(有關聯)</span>`
                  }
              </div>`;
@@ -509,11 +509,11 @@
           let stateClass = '';
           if (c === localDefaultCurrency) stateClass = 'default';
           else if (localSupportedCurrencies.has(c)) stateClass = 'selected';
-          html += `<button type="button" onclick="handleChipClick('` + c + `')" class="chip-btn ` + stateClass + `">` + c + `</button>`;
+          html += `<button type="button" onclick="handleChipClick('${c}')" class="chip-btn ${stateClass}">${c}</button>`;
        });
        
        let twdClass = (localDefaultCurrency === 'TWD') ? 'default' : (localSupportedCurrencies.has('TWD') ? 'selected' : '');
-       html = `<button type="button" onclick="handleChipClick('TWD')" class="chip-btn ` + twdClass + `">TWD</button>` + html;
+       html = `<button type="button" onclick="handleChipClick('TWD')" class="chip-btn ${twdClass}">TWD</button>` + html;
        html += `<button type="button" onclick="toggleNewCurrencyArea()" class="chip-btn border-dashed border-gray-300 text-gray-400">➕ 自訂</button>`;
        area.innerHTML = html;
 
@@ -558,11 +558,11 @@
         isShowingNewCurrencyInput = false;
 
         renderCurrencyChips();
-        showToast(`已新增並套用 ` + code, "success");
+        showToast(`已新增並套用 ${code}`, "success");
     }
 
     document.getElementById('view-add').addEventListener('input', function(e) { if (e.target.classList.contains('live-trigger') || e.target.classList.contains('split-input') || e.target.classList.contains('split-checkbox')) { if (e.target.id === 'splitModeSelect' || e.target.id === 'currencySelect') renderSplitDetailAdd(); calculateLivePreview(); }});
-    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ` + CURRENT_RATE + ` TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
+    document.getElementById('currencySelect').addEventListener('change', function(e) { CURRENT_RATE = RATE_MATRIX[e.target.value] || 1.0; document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`; renderSplitDetailAdd(); calculateLivePreview();});
 
     function toggleCheckbox(rowElement) { const cb = rowElement.querySelector('.split-checkbox'); if (cb) { cb.checked = !cb.checked; hapticVibrate(20); calculateLivePreview(); } }
 
@@ -589,19 +589,19 @@
 
         if (mode === "EQUAL") { 
           row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-teal-50'); 
-          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="` + name + `" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" ` + (backup.checked ? 'checked' : '') + `></div>`; 
+          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" ${backup.checked ? 'checked' : ''}></div>`; 
         } 
         else if (mode === "EXACT") { 
-          inputHtml = `<div class="flex items-center"><input type="text" data-name="` + name + `" inputmode="decimal" value="` + backup.value + `" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">` + currency + `</span></div>`; 
+          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
         } 
         else if (mode === "SHARE") { 
           let shareVal = backup.value || "1";
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="` + name + `" inputmode="decimal" value="` + shareVal + `" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="${shareVal}" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
         } 
         else if (mode === "PERCENT") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="` + name + `" inputmode="decimal" value="` + backup.value + `" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
         }
-        row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">` + name + `</span>` + inputHtml; container.appendChild(row);
+        row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">${name}</span>${inputHtml}`; container.appendChild(row);
       });
     }
 
@@ -699,14 +699,14 @@
            if (IS_DRAFT) {
              const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
              await liff.sendMessages([{
-                 type: 'flex', altText: `開啟帳本｜` + name,
+                 type: 'flex', altText: `開啟帳本｜${name}`,
                  contents: {
                    type: 'bubble', size: 'kilo',
                    body: {
                      type: 'box', layout: 'vertical', backgroundColor: '#FFFDF8',
                      contents: [
-                       { type: 'text', text: `✈️ ` + name, weight: 'bold', size: 'lg' },
-                       { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' },
+                       { type: 'text', text: `✈️ ${name}`, weight: 'bold', size: 'lg' },
+                       { type: 'text', text: `📅 ${start || '未設定'} ~ ${end || '未設定'}`, size: 'sm', color: '#888888', margin: 'md' },
                        { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
                      ]
                    },
@@ -758,7 +758,7 @@
               let resSpan = row.querySelector('.live-result'); 
               if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
             }
-            if(val > 0) detailArr.push(name + ` ` + val.toLocaleString()); 
+            if(val > 0) detailArr.push(`${name} ${val.toLocaleString()}`); 
           });
           const detailText = detailArr.join("｜");
           
@@ -779,14 +779,15 @@
          if (!name) return showToast("旅程名稱不可為空", "error");
 
          await liff.sendMessages([{
-             type: 'flex', altText: `開啟帳本｜` + name,
+             type: 'flex', altText: `開啟帳本｜${name}`,
              contents: {
                type: 'bubble', size: 'kilo',
                body: {
                  type: 'box', layout: 'vertical', backgroundColor: '#FFFDF8',
                  contents: [
-                   { type: 'text', text: `✈️ ` + name, weight: 'bold', size: 'lg' },
-                   { type: 'text', text: `📅 ` + (start || '未設定') + ` ~ ` + (end || '未設定'), size: 'sm', color: '#888888', margin: 'md' }
+                   { type: 'text', text: `✈️ ${name}`, weight: 'bold', size: 'lg' },
+                   { type: 'text', text: `📅 ${start || '未設定'} ~ ${end || '未設定'}`, size: 'sm', color: '#888888', margin: 'md' },
+                   { type: 'text', text: 'Stay NoMad. Split the bill.', size: 'sm', color: '#888888', margin: 'md' }
                  ]
                },
                footer: { type: 'box', layout: 'vertical', contents: [{ type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }] }
@@ -891,7 +892,7 @@
         `;
 
         if (result.status === "dashboard") {
-          document.getElementById('tripNameDisplay').innerText = `總控台 (Hi, ` + (result.suggestedName || currentUserProfile.displayName) + `)`;
+          document.getElementById('tripNameDisplay').innerText = `總控台 (Hi, ${result.suggestedName || currentUserProfile.displayName})`;
           let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-emerald-50 text-emerald-600 border border-emerald-100", "記錄中")).join('');
           
           if (result.canCreate) {
@@ -962,20 +963,20 @@
           const payerSel = document.getElementById('payerSelect');
           
           let prevSelectedPayer = payerSel.value;
-          payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">` + m + `</option>`).join('');
+          payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">${m}</option>`).join('');
           if(MEMBER_LIST.includes(prevSelectedPayer)) payerSel.value = prevSelectedPayer;
           else if (result.suggestedName && MEMBER_LIST.includes(result.suggestedName)) { payerSel.value = result.suggestedName; }
           
           const curSelect = document.getElementById('currencySelect');
           let prevSelectedCur = curSelect.value;
-          curSelect.innerHTML = Array.from(localSupportedCurrencies).map(c => `<option value="${c}">` + c + `</option>`).join('');
+          curSelect.innerHTML = Array.from(localSupportedCurrencies).map(c => `<option value="${c}">${c}</option>`).join('');
           curSelect.value = prevSelectedCur || localDefaultCurrency; 
 
-          document.getElementById('rateDisplay').innerText = `(1 : ` + CURRENT_RATE + ` TWD)`;
+          document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerHTML =
-            `${IS_ARCHIVED ? '📦' : '✈️'} ` + result.tripName + `
+            `${IS_ARCHIVED ? '📦' : '✈️'} ${result.tripName}
              <span class="text-[11px] text-gray-400 font-normal ml-1">
-               ` + result.startDate + ` ~ ` + result.endDate + `
+               ${result.startDate} ~ ${result.endDate}
              </span>`;
           
           document.getElementById('tabContainer').style.display = 'flex';
