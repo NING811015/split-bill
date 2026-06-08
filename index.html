@@ -722,7 +722,7 @@
           });
           
           // V22.2 Alias 本體映射
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n 👳 ${selectedPayerName} 付\n-------- 明細 --------${detailText}\n\n by ${localAlias || currentUserProfile.displayName}`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👳 ${selectedPayerName} 付\n-------- 明細 --------${detailText}\n\nby ${localAlias || currentUserProfile.displayName}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
