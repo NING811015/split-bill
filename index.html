@@ -569,7 +569,7 @@
         const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 h-10 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
         if (mode === "EQUAL") { 
           row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-teal-50'); 
-          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-teal-600 rounded border-gray-300 pointer-events-none" checked></div>`; 
+          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" checked></div>`; 
         } 
         else if (mode === "EXACT") { 
           inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
