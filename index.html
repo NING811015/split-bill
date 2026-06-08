@@ -718,11 +718,11 @@
               let resSpan = row.querySelector('.live-result'); 
               if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
             }
-            if(val > 0) detailText += `\n ${name}( ${val.toLocaleString()} ${currency})`; 
+            if(val > 0) detailText += `｜ ${name}   ${val.toLocaleString()} `; 
           });
           
           // V22.2 Alias 本體映射
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👤 ${selectedPayerName} 付\n-------- 明細 --------${detailText}\n\nby ${localAlias || currentUserProfile.displayName}`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👤 ${selectedPayerName} 付\n明細：\n${detailText}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
