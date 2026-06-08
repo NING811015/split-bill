@@ -174,7 +174,7 @@
             </div>
             <div class="w-[60%]">
               <label class="block text-xs font-medium text-gray-500 mb-1">消費項目</label>
-              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full text-right bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
+              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
             </div>
           </div>
           <div class="flex space-x-3">
@@ -259,7 +259,14 @@
     let localCustomRates = {};
     let localAlias = ""; // 儲存本團分身暱稱
 
-    const hapticVibrate = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
+    // 核心安全修復 (Defensive Guard)：阻斷 Intervention 造成整個事件監聽器暴斃
+    const hapticVibrate = (pattern) => { 
+      try {
+        if (navigator.vibrate) navigator.vibrate(pattern); 
+      } catch (e) {
+        console.warn("Haptic vibration blocked by browser intervention policy.", e);
+      }
+    };
     
     const showToast = (message, type = 'info') => {
       const container = document.getElementById('toastContainer');
@@ -434,9 +441,8 @@
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false; }
     }
 
-    // V22.2 團員管理邏輯
     function renderMembersManagement() {
-       if (!IS_CREATOR && currentUserProfile.userId !== ADMIN_USER_ID) return; // 僅建立者或管理員可見
+       if (!IS_CREATOR && currentUserProfile.userId !== ADMIN_USER_ID) return; 
        document.getElementById('memberManagementArea').style.display = 'block';
        const container = document.getElementById('memberListContainer');
        let html = '';
@@ -451,7 +457,7 @@
        });
 
        MEMBER_LIST.forEach(name => {
-           let canDelete = !involved.has(name) && name !== localAlias; // 沒牽涉帳務且不是自己
+           let canDelete = !involved.has(name) && name !== localAlias; 
            html += `
              <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
                  <span class="text-sm font-medium text-gray-700">${name}</span>
@@ -490,7 +496,6 @@
          } else throw new Error(result.message);
        } catch(e) { showToast(e.message || "移除失敗", "error"); hapticVibrate([50, 50, 50]); closeEvictModal(); btn.innerText = "確定移除"; btn.disabled = false; }
     }
-
 
     function renderCurrencyChips() {
        const area = document.getElementById('currencyChipsArea');
@@ -689,7 +694,7 @@
              setTimeout(()=> window.location.reload(), 800);
            }
         } else throw new Error(result.message);
-      } catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改"; }
+      } catch (e) { showToast(e.message, "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "🚀 確認開團並公告" : "💾 儲存修改"; }
     }
 
     async function submitExpense() {
@@ -722,7 +727,6 @@
           });
           const detailText = detailArr.join("｜");
           
-          // V22.2 Alias 本體映射
           const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
@@ -767,7 +771,6 @@
       } catch(e) { showToast("發送失敗", "error"); }
     }
 
-    // V22.2 Modal Archive
     function promptArchiveTrip() {
       hapticVibrate(50);
       document.getElementById('archiveModal').classList.remove('hidden');
@@ -817,7 +820,13 @@
         
         const ctx = liff.getContext();
         currentGroupId = ctx?.groupId || ctx?.roomId || "ONLINE_TEST"; 
-        currentUserProfile = await liff.getProfile();
+        
+        // 性能特化 (Performance Optimization)：拔除 liff.getProfile() 網絡請求開銷，改採記憶體內置解碼
+        const idToken = liff.getDecodedIDToken();
+        currentUserProfile = {
+          userId: ctx?.userId || liff.getContext()?.userId || "UNKNOWN_USER",
+          displayName: idToken?.name || "User"
+        };
 
         const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
@@ -856,7 +865,7 @@
 
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
-            if(result.suggestedName) document.getElementById('realNameInput').value = result.suggestedName; 
+            document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName; 
             document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（5個字內）。";
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
@@ -867,7 +876,7 @@
           RATE_MATRIX = result.rateMatrix || {}; 
           GLOBAL_FEE_RATE = result.feeRate || 0; 
           MEMBER_LIST = result.members || []; ALL_EXPENSES = result.expenses || []; 
-          localAlias = result.suggestedName || ""; // V22.2 本體映射註冊
+          localAlias = result.suggestedName || ""; 
 
           let curStr = result.currenciesStr || "TWD";
           let tempSet = new Set(curStr.split(',').map(s=>s.trim().toUpperCase()));
@@ -903,7 +912,7 @@
                 const label = document.getElementById('agreeCloseLabel');
                 cb.checked = true; cb.disabled = true;
                 label.classList.add('opacity-50', 'pointer-events-none');
-                renderMembersManagement(); // V22.2 渲染團員管理
+                renderMembersManagement(); 
              }
           }
 
@@ -935,27 +944,26 @@
           if (IS_ARCHIVED) { switchTab('history'); } 
           else { switchTab('add'); }
         } else throw new Error(result.message || "連線失敗");
-      } catch (err) { statusLight.classList.replace('bg-yellow-400', 'bg-rose-500'); statusLight.classList.remove('animate-pulse'); showToast("系統阻斷：" + err.message, "error"); hapticVibrate([50, 50, 50]); }
+      } catch (err) { statusLight.classList.replace('bg-yellow-400', 'bg-rose-50'); statusLight.classList.remove('animate-pulse'); showToast("系統阻斷：" + err.message, "error"); hapticVibrate([50, 50, 50]); }
     }
 
-          document.addEventListener('click', function(e) {
-          const btn = e.target.closest('.split-mode-btn');
-          if(!btn) return;
-          hapticVibrate(20);
+    // 事件監聽掛載校準 (Event Listener Scope Calibration)
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.split-mode-btn');
+      if(!btn) return;
+      
+      hapticVibrate(20);
 
-          document.querySelectorAll('.split-mode-btn')
-          .forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.split-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
 
-          btn.classList.add('active');
+      document.getElementById('splitModeSelect').value = btn.dataset.mode;
 
-          document.getElementById('splitModeSelect').value =
-          btn.dataset.mode;
+      renderSplitDetailAdd();
+      calculateLivePreview();
+    });
 
-  renderSplitDetailAdd();
-  calculateLivePreview();
-});
-
-initializeLiff();
+    initializeLiff();
   </script>
 </body>
 </html>
