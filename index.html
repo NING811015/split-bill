@@ -723,7 +723,7 @@
           const detailText = detailArr.join("｜");
           
           // V22.2 Alias 本體映射
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n明細：\n${detailText}`;
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
