@@ -13,23 +13,19 @@
     .app-container { height: calc(100% - 76px); display: flex; flex-direction: column; }
     .btn-hidden { display: none !important; }
     .filter-btn { transition: all 0.15s; }
-    .filter-btn.active { background-color: #EFF6FF; color: #1D4ED8; font-weight: 700; box-shadow: inset 0 0 0 1px #BFDBFE; }
-    
+    .filter-btn.active { background-color: #F0FDFA; color: #0F766E; font-weight: 700; box-shadow: inset 0 0 0 1px #99F6E4; }
     .hide-scrollbar::-webkit-scrollbar { display: none; }
     .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    
     .chip-btn { padding: 4px 12px; border-radius: 9999px; border: 1px solid #E5E7EB; background: #fff; font-size: 11px; font-weight: 600; color: #6B7280; transition: all 0.15s; }
-    .chip-btn.selected { background: #EEF4FF; border-color: #3B82F6; color: #2563EB; }
-    .chip-btn.default { background: #1D4ED8; border-color: #1E3A8A; color: #fff; } 
-    
+    .chip-btn.selected { background: #F0FDFA; border-color: #14B8A6; color: #0F766E; }
+    .chip-btn.default { background: #0D9488; border-color: #0F766E; color: #fff; } 
     .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
     .toast-enter { transform: translateY(-100%); opacity: 0; }
     .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .toast-exit { transform: translateY(-20%); opacity: 0; transition: all 0.2s ease-in; }
     .split-mode-btn { height:40px; background:#F9FAFB; border:1px solid #E5E7EB; border-radius:10px; font-size:12px; font-weight:600; color:#6B7280; transition:all .15s; }
-    .split-mode-btn.active { background:#EEF4FF; border-color:#3B82F6; color:#2563EB;}
+    .split-mode-btn.active { background:#F0FDFA; border-color:#14B8A6; color:#0F766E;}
     .split-mode-btn:active { transform:scale(.97);}
-    
     details > summary { list-style: none; }
     details > summary::-webkit-details-marker { display: none; }
   </style>
@@ -52,18 +48,40 @@
       <div class="text-4xl">👋</div>
       <h2 class="text-xl font-bold text-gray-800">歡迎加入旅程</h2>
       <p class="text-sm text-gray-500">請設定群組內可辨識的暱稱（限 5 個字以內）。</p>
-      <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner">
-      <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-blue-600 text-white font-bold rounded-xl py-3 active:bg-blue-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
+      <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
+      <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-teal-600 text-white font-bold rounded-xl py-3 active:bg-teal-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
     </div>
   </div>
 
-  <div id="deleteModal" class="absolute inset-0 z-[90] modal-overlay flex flex-col justify-center items-center p-6 hidden">
+  <div id="deleteModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 transform transition-all">
-      <h3 class="text-lg font-bold text-red-600 flex items-center">⚠️ 確認撤銷帳目？</h3>
+      <h3 class="text-lg font-bold text-rose-600 flex items-center">⚠️ 確認撤銷帳目？</h3>
       <p class="text-sm text-gray-600 font-mono tabular-nums tracking-tight whitespace-pre-line" id="deleteTargetDesc"></p>
       <div class="flex space-x-3 pt-2">
         <button onclick="closeDeleteModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">取消</button>
-        <button id="confirmDeleteBtn" class="w-1/2 bg-red-500 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-red-600 transition-transform active:scale-[0.98]">確定撤銷</button>
+        <button id="confirmDeleteBtn" class="w-1/2 bg-rose-500 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-rose-600 transition-transform active:scale-[0.98]">確定撤銷</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="archiveModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
+    <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 transform transition-all">
+      <h3 class="text-lg font-bold text-teal-600 flex items-center">📦 確定要結團封存嗎？</h3>
+      <p class="text-sm text-gray-600 leading-relaxed">執行後，帳本將轉為<span class="font-bold text-rose-500">唯讀模式</span>，不再允許新增或撤銷帳目，並結算最終明細。</p>
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeArchiveModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">再等等</button>
+        <button id="confirmArchiveBtn" onclick="archiveTrip()" class="w-1/2 bg-teal-600 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-teal-700 transition-transform active:scale-[0.98]">確定結團</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="evictModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
+    <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 transform transition-all">
+      <h3 class="text-lg font-bold text-rose-600 flex items-center">⚠️ 移除團員</h3>
+      <p class="text-sm text-gray-600 leading-relaxed">您確定要將 <span id="evictTargetName" class="font-bold text-rose-600"></span> 從此帳本中移除嗎？</p>
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeEvictModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">取消</button>
+        <button id="confirmEvictBtn" onclick="executeRemoveMember()" class="w-1/2 bg-rose-500 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-rose-600 transition-transform active:scale-[0.98]">確定移除</button>
       </div>
     </div>
   </div>
@@ -80,7 +98,6 @@
     <div class="p-4 flex flex-col h-full overflow-y-auto bg-gray-50/80" id="view-dashboard" style="display: none;">
       <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2"><span>🚀</span> 我的旅程總覽</h2>
       <div id="dashboardActive" class="space-y-4 mb-6"></div>
-      
       <details class="group">
         <summary class="text-sm font-bold text-gray-500 mb-3 border-t border-gray-200 pt-4 flex items-center gap-2 cursor-pointer select-none">
           <span class="transition-transform group-open:rotate-90">▶</span> 🔒 歷史封存
@@ -94,7 +111,7 @@
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 mb-1">📍 旅程名稱</label>
-          <input type="text" id="setTripName" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例如：南非挖礦團">
+          <input type="text" id="setTripName" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例: 首爾">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -110,65 +127,69 @@
         <div class="border-t border-gray-100 pt-3">
           <div class="flex justify-between items-center mb-2">
             <label class="block text-xs font-bold text-gray-500 flex items-center gap-1">💱 旅程使用幣別</label>
-            <span class="text-[9px] text-gray-400">點擊兩次設為預設貨幣(深藍底)</span>
+            <span class="text-[9px] text-gray-400">點擊選取支援，再次點擊設為預設</span>
           </div>
           <div id="currencyChipsArea" class="flex flex-wrap gap-2 mb-2"></div>
           <input type="hidden" id="setDefaultCurrency" value="TWD">
           <input type="hidden" id="setCurrencies" value="TWD">
         </div>
 
-        <div id="newRateArea" class="hidden bg-orange-50 border border-orange-100 p-3 rounded-lg">
-           <label class="block text-xs font-bold text-orange-800 mb-2">➕ 新增自訂幣別與匯率</label>
+        <div id="newRateArea" class="hidden bg-rose-50 border border-rose-100 p-3 rounded-lg">
+           <label class="block text-xs font-bold text-rose-800 mb-2">➕ 新增自訂幣別與匯率</label>
            <div class="flex items-center gap-2">
-             <input type="text" id="setNewCurCode" maxlength="3" class="w-16 bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-center uppercase" placeholder="代碼">
-             <span class="text-sm font-mono text-orange-700 shrink-0">=</span>
-             <input type="text" id="setNewRate" inputmode="decimal" class="flex-1 min-w-0 bg-white rounded-lg p-1.5 text-sm font-mono border border-orange-200 text-right" placeholder="例如：35.2">
-             <span class="text-sm font-mono text-orange-700 shrink-0">TWD</span>
-             <button type="button" onclick="confirmNewCurrency()" class="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold active:bg-orange-600">確認</button>
+             <input type="text" id="setNewCurCode" maxlength="3" class="w-16 bg-white rounded-lg p-1.5 text-sm font-mono border border-rose-200 text-center uppercase" placeholder="代碼">
+             <span class="text-sm font-mono text-rose-700 shrink-0">=</span>
+             <input type="text" id="setNewRate" inputmode="decimal" class="flex-1 min-w-0 bg-white rounded-lg p-1.5 text-sm font-mono border border-rose-200 text-right" placeholder="例如：35.2">
+             <span class="text-sm font-mono text-rose-700 shrink-0">TWD</span>
+             <button type="button" onclick="confirmNewCurrency()" class="bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold active:bg-rose-600">確認</button>
            </div>
         </div>
         
-        <label id="agreeCloseLabel" class="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg mt-4 border border-blue-100 cursor-pointer transition-opacity">
-          <input type="checkbox" id="agreeCloseCb" class="mt-0.5 w-4 h-4 text-blue-600 rounded">
-          <span class="text-xs text-blue-800 font-medium leading-relaxed">旅程完成後，我會記得點「結團」封存帳本。</span>
+        <label id="agreeCloseLabel" class="flex items-start space-x-2 p-3 bg-teal-50 rounded-lg mt-4 border border-teal-100 cursor-pointer transition-opacity">
+          <input type="checkbox" id="agreeCloseCb" class="mt-0.5 w-4 h-4 text-teal-600 rounded">
+          <span class="text-xs text-teal-800 font-medium leading-relaxed">旅程完成後，我會記得點「結團」封存帳本。</span>
         </label>
+        
+        <div id="memberManagementArea" class="border-t border-gray-100 pt-4 mt-4 hidden">
+          <h3 class="text-xs font-bold text-gray-500 mb-2">👥 團員管理</h3>
+          <div id="memberListContainer" class="space-y-2"></div>
+        </div>
+
       </div>
 
       <div id="activeSettingsArea" class="mt-4 space-y-3 hidden">
-        <button onclick="sendInviteLink()" class="w-full bg-green-50 text-green-700 font-bold rounded-xl py-2 active:bg-green-100 border border-green-200">🔗 重發群組連結</button>
-        <button onclick="promptArchiveTrip()" class="w-full bg-red-50 text-red-600 font-bold rounded-xl py-2 active:bg-red-100 border border-red-200">📦 結團封存為唯讀</button>
+        <button onclick="sendInviteLink()" class="w-full bg-emerald-50 text-emerald-700 font-bold rounded-xl py-2 active:bg-emerald-100 border border-emerald-200">🔗 重發群組連結</button>
+        <button onclick="promptArchiveTrip()" class="w-full bg-rose-50 text-rose-600 font-bold rounded-xl py-2 active:bg-rose-100 border border-rose-200">📦 結團封存為唯讀</button>
       </div>
       <div class="pb-24"></div>
     </div>
 
     <div class="pt-3 px-3 pb-0 flex flex-col h-full overflow-hidden" id="view-add" style="display: none;">
       <div class="h-full bg-white rounded-t-xl shadow-sm border-t border-l border-r border-gray-100 flex flex-col flex-grow overflow-hidden relative">
-        
         <div class="p-3 space-y-3 flex-shrink-0 transition-all duration-200" id="addMainArea">
           <div class="flex space-x-3">
             <div class="w-[40%]">
               <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
-              <select id="payerSelect" class="w-full bg-blue-50 border border-blue-100 rounded-lg h-10 px-2 focus:outline-none text-blue-700 font-bold text-sm truncate shadow-inner"></select>
+              <select id="payerSelect" class="w-full bg-teal-50 border border-teal-100 rounded-lg h-10 px-2 focus:outline-none text-teal-700 font-bold text-sm truncate shadow-inner"></select>
             </div>
             <div class="w-[60%]">
               <label class="block text-xs font-medium text-gray-500 mb-1">消費項目</label>
-              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-base shadow-inner transition-all">
+              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
             </div>
           </div>
           <div class="flex space-x-3">
             <div class="w-[40%]">
               <label class="flex items-baseline text-xs font-medium text-gray-500 mb-1 whitespace-nowrap">
-                幣別 <span id="rateDisplay" class="text-[9px] text-blue-500 ml-1 font-bold"></span>
+                幣別 <span id="rateDisplay" class="text-[9px] text-teal-500 ml-1 font-bold"></span>
               </label>
               <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-sm shadow-inner"></select>
             </div>
             <div class="w-[60%]">
               <label class="block text-xs font-medium text-gray-500 mb-1">總金額</label>
-              <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-blue-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-400 text-right shadow-inner transition-all">
+              <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-teal-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-right shadow-inner transition-all">
             </div>
           </div>
         </div>
-
         <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
           <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
           <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
@@ -179,7 +200,6 @@
           </div>
           <input type="hidden" id="splitModeSelect" value="EQUAL">
         </div>
-
         <div class="bg-slate-50 border-t border-slate-200 flex flex-col flex-grow min-h-0 mt-3 rounded-t-xl">
           <div class="p-3 pb-2 flex justify-between items-center flex-shrink-0">
             <span class="text-xs font-bold text-gray-600">分帳明細</span>
@@ -192,12 +212,10 @@
 
     <div class="flex flex-col h-full overflow-hidden bg-gray-50" id="view-history" style="display: none;">
       <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-1">
-        
         <div class="px-3 mb-2 flex justify-between items-center border-b border-gray-50 pb-2">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">總計</span>
-          <span class="text-base font-bold text-amber-600 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-amber-500">TWD</span></span>
+          <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
         </div>
-
         <div class="space-y-2 px-3 pb-1">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">📅 日期</span>
@@ -213,7 +231,6 @@
           </div>
         </div>
       </div>
-
       <div class="p-3 flex-grow overflow-y-auto relative z-0">
         <div id="historyListContainer" class="space-y-2 pb-4"></div>
       </div>
@@ -221,7 +238,7 @@
   </div>
 
   <div id="bottomBar" class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 p-3 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] z-50">
-    <button id="submitBtn" onclick="submitMainAction()" disabled class="w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200">
+    <button id="submitBtn" onclick="submitMainAction()" disabled class="w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200">
       讀取中...
     </button>
   </div>
@@ -240,13 +257,14 @@
     let localSupportedCurrencies = new Set(), localDefaultCurrency = "TWD";
     let isShowingNewCurrencyInput = false;
     let localCustomRates = {};
+    let localAlias = ""; // 儲存本團分身暱稱
 
     const hapticVibrate = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
     
     const showToast = (message, type = 'info') => {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      const bgColors = { success: 'bg-green-600', error: 'bg-red-600', info: 'bg-gray-800' };
+      const bgColors = { success: 'bg-emerald-600', error: 'bg-rose-600', info: 'bg-gray-800' };
       const icons = { success: '✅', error: '⚠️', info: 'ℹ️' };
       toast.className = `${bgColors[type]} text-white px-4 py-3 rounded-xl shadow-lg text-sm font-bold flex items-center space-x-2 toast-enter pointer-events-auto`;
       toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
@@ -265,12 +283,9 @@
         if (currentTab === 'add') {
           bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; 
         }
-        
         if (currentTab === 'add' && e.target.closest('#splitDetailContainer')) {
             document.getElementById('addMainArea').classList.add('hidden'); 
-            setTimeout(() => { 
-                document.getElementById('splitModeAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' }); 
-            }, 50);
+            setTimeout(() => { document.getElementById('splitModeAnchor').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
         } else {
             setTimeout(() => { e.target.scrollIntoView({ behavior: 'smooth', block: 'end' }); }, 300);
         }
@@ -304,7 +319,7 @@
       });
 
       document.querySelectorAll('.tab-btn').forEach(btn => {
-         if (btn.dataset.tab === tab) { btn.className = 'tab-btn w-1/3 text-center py-2.5 text-blue-600 border-b-2 border-blue-600 cursor-pointer transition-colors bg-white font-bold'; }
+         if (btn.dataset.tab === tab) { btn.className = 'tab-btn w-1/3 text-center py-2.5 text-teal-600 border-b-2 border-teal-600 cursor-pointer transition-colors bg-white font-bold'; }
          else { btn.className = 'tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold'; }
       });
 
@@ -317,7 +332,7 @@
           if (tab === 'add') { calculateLivePreview(); }
           else if (tab === 'settings') {
             btn.disabled = false; btn.innerText = IS_DRAFT ? "🚀 確認開團並公告" : "💾 儲存修改";
-            btn.className = "w-full bg-blue-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
+            btn.className = "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
           }
       }
     }
@@ -325,11 +340,11 @@
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
     function buildFilterHtml(type, list, selectedArr) {
-      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
+      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
         let display = (type==='date') ? item.slice(5) : item;
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ${isActive ? 'active bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
+        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
       });
       return html;
     }
@@ -375,7 +390,7 @@
                   <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${exp.date.slice(5)}</span>
                   <h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4>
                 </div>
-                <div class="text-sm font-bold text-blue-600 font-mono tabular-nums whitespace-nowrap">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-blue-400 font-sans">${exp.currency}</span></div>
+                <div class="text-sm font-bold text-teal-600 font-mono tabular-nums whitespace-nowrap">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans">${exp.currency}</span></div>
               </div>
               <div class="flex justify-between items-end pr-8 mt-1">
                 <div class="text-[11px] text-gray-500 whitespace-normal break-words leading-relaxed">
@@ -384,7 +399,7 @@
                 </div>
                 <div class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</div>
               </div>
-              ${!IS_ARCHIVED ? `<button onclick="promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-1 text-gray-300 hover:text-red-500 p-2 active:bg-red-50 rounded-lg transition-colors">🗑️</button>` : ''}
+              ${!IS_ARCHIVED ? `<button onclick="promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-1 text-gray-300 hover:text-rose-500 p-2 active:bg-rose-50 rounded-lg transition-colors">🗑️</button>` : ''}
             </div>
           `;
         }
@@ -398,25 +413,84 @@
       hapticVibrate([50, 50]);
       pendingDeleteId = id; pendingTripId = tripId;
       document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${amount.toLocaleString()} ${currency}`;
-      document.getElementById('deleteModal').classList.remove('hidden'); document.getElementById('confirmDeleteBtn').onclick = executeDelete;
+      document.getElementById('deleteModal').classList.remove('hidden'); 
     }
     function closeDeleteModal() { pendingDeleteId = null; pendingTripId = null; document.getElementById('deleteModal').classList.add('hidden'); }
     async function executeDelete() {
       if(!pendingDeleteId) return;
       hapticVibrate(50);
-      document.getElementById('confirmDeleteBtn').innerText = "處理中..."; document.getElementById('confirmDeleteBtn').disabled = true;
+      const btn = document.getElementById('confirmDeleteBtn');
+      btn.innerText = "處理中..."; btn.disabled = true;
       try {
         const payload = { action: "deleteExpense", expenseId: pendingDeleteId, userId: currentUserProfile.userId, tripId: pendingTripId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
         if (result.status === "success") {
-           showToast("撤銷成功，同步至群組", "success");
+           showToast("撤銷成功", "success");
            let targetDesc = document.getElementById('deleteTargetDesc').innerText;
-           await liff.sendMessages([{ type: 'text', text: `🗑️ ${currentUserProfile.displayName} 撤銷了一筆帳目\n\n${targetDesc}` }]);
+           await liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${targetDesc}` }]);
            setTimeout(() => liff.closeWindow(), 1000); 
         } else throw new Error();
-      } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); document.getElementById('confirmDeleteBtn').innerText = "確定撤銷"; document.getElementById('confirmDeleteBtn').disabled = false; }
+      } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false; }
     }
+
+    // V22.2 團員管理邏輯
+    function renderMembersManagement() {
+       if (!IS_CREATOR && currentUserProfile.userId !== ADMIN_USER_ID) return; // 僅建立者或管理員可見
+       document.getElementById('memberManagementArea').style.display = 'block';
+       const container = document.getElementById('memberListContainer');
+       let html = '';
+       
+       let involved = new Set();
+       ALL_EXPENSES.forEach(exp => {
+           involved.add(exp.payer);
+           try {
+               let splits = JSON.parse(exp.splitDetail);
+               for(let k in splits) { if (Number(splits[k]) > 0) involved.add(k); }
+           } catch(e){}
+       });
+
+       MEMBER_LIST.forEach(name => {
+           let canDelete = !involved.has(name) && name !== localAlias; // 沒牽涉帳務且不是自己
+           html += `
+             <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
+                 <span class="text-sm font-medium text-gray-700">${name}</span>
+                 ${canDelete ? 
+                     `<button type="button" onclick="promptRemoveMember('${name}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
+                     `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">無法移除(有關聯)</span>`
+                 }
+             </div>`;
+       });
+       container.innerHTML = html;
+    }
+
+    let pendingRemoveName = null;
+    function promptRemoveMember(name) {
+       hapticVibrate(50);
+       pendingRemoveName = name;
+       document.getElementById('evictTargetName').innerText = name;
+       document.getElementById('evictModal').classList.remove('hidden');
+    }
+    function closeEvictModal() {
+       pendingRemoveName = null;
+       document.getElementById('evictModal').classList.add('hidden');
+    }
+    async function executeRemoveMember() {
+       if(!pendingRemoveName) return;
+       hapticVibrate(50);
+       const btn = document.getElementById('confirmEvictBtn');
+       btn.innerText = "處理中..."; btn.disabled = true;
+       try {
+         const payload = { action: "removeMember", tripId: currentTripId, targetName: pendingRemoveName, userId: currentUserProfile.userId };
+         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+         const result = await res.json();
+         if (result.status === "success") {
+            showToast("已成功移除團員", "success");
+            setTimeout(() => window.location.reload(), 1000); 
+         } else throw new Error(result.message);
+       } catch(e) { showToast(e.message || "移除失敗", "error"); hapticVibrate([50, 50, 50]); closeEvictModal(); btn.innerText = "確定移除"; btn.disabled = false; }
+    }
+
 
     function renderCurrencyChips() {
        const area = document.getElementById('currencyChipsArea');
@@ -425,6 +499,8 @@
        
        Array.from(allKeys).forEach(c => {
           if(!c || c === 'TWD') return;
+          if (!RATE_MATRIX[c] && !localSupportedCurrencies.has(c)) return; 
+          
           let stateClass = '';
           if (c === localDefaultCurrency) stateClass = 'default';
           else if (localSupportedCurrencies.has(c)) stateClass = 'selected';
@@ -492,17 +568,17 @@
       MEMBER_LIST.forEach(name => {
         const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 h-10 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
         if (mode === "EQUAL") { 
-          row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-blue-50'); 
-          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-blue-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-blue-600 rounded border-gray-300 pointer-events-none" checked></div>`; 
+          row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-teal-50'); 
+          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 text-teal-600 rounded border-gray-300 pointer-events-none" checked></div>`; 
         } 
         else if (mode === "EXACT") { 
-          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
+          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
         } 
         else if (mode === "SHARE") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="1" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
         } 
         else if (mode === "PERCENT") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-blue-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-blue-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
         }
         row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">${name}</span>${inputHtml}`; container.appendChild(row);
       });
@@ -521,33 +597,33 @@
       }
 
       if (mode === "EQUAL") {
-        const checked = document.querySelectorAll('.split-checkbox:checked'); if (checked.length === 0) { statusBar.innerHTML = `<span class="text-red-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象"; return; }
+        const checked = document.querySelectorAll('.split-checkbox:checked'); if (checked.length === 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象"; return; }
         let base = Math.floor(rawAmount / checked.length); let residue = rawAmount - (base * checked.length); let cIdx = 0;
         Array.from(rows).forEach(row => { const cb = row.querySelector('.split-checkbox'); const res = row.querySelector('.live-result'); if (cb && cb.checked) { let val = base + (cIdx === checked.length - 1 ? residue : 0); res.innerText = `${val.toLocaleString()}`; cIdx++; } else if (res) { res.innerText = "-"; } });
-        statusBar.innerHTML = `<span class="text-green-600">✅ 均分完成</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500');
+        statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-teal-600', 'text-white', 'hover:bg-teal-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500');
       } 
       else if (mode === "EXACT") {
         let currentForeignSum = 0; document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value) || 0)); let diff = rawAmount - currentForeignSum;
         
-        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-green-600">✅ 帳目平衡</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500'); } 
-        else if (diff > 0) { statusBar.innerHTML = `<span class="text-blue-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
-        else { statusBar.innerHTML = `<span class="text-red-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 金額超出`; }
+        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-teal-600', 'text-white', 'hover:bg-teal-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500'); } 
+        else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
+        else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 金額超出`; }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
         let totalMetric = 0; document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value) || 0));
-        if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-red-500">❌ 總份數為 0</span>`; return; }
+        if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`; return; }
         
         if (mode === "PERCENT") {
             if (Math.abs(totalMetric - 100) > 0.01) { 
-                statusBar.innerHTML = `<span class="text-blue-500">目前計 ${totalMetric}%</span>`; btn.innerText = `🔒 比例須等於 100%`; 
-                if(totalMetric > 100) { statusBar.innerHTML = `<span class="text-red-500">❌ 超出 ${totalMetric}%</span>`; }
+                statusBar.innerHTML = `<span class="text-teal-500">目前計 ${totalMetric}%</span>`; btn.innerText = `🔒 比例須等於 100%`; 
+                if(totalMetric > 100) { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${totalMetric}%</span>`; }
                 return; 
             }
         }
 
         let calculatedSum = 0; let inputs = document.querySelectorAll('.split-input');
         inputs.forEach((input, idx) => { let val = parseFloat(input.value) || 0; let assigned = Math.floor(rawAmount * (val / totalMetric)); calculatedSum += assigned; if (idx === inputs.length - 1) assigned += (rawAmount - calculatedSum); const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result'); if(res) res.innerText = `${assigned.toLocaleString()}`; });
-        statusBar.innerHTML = `<span class="text-green-600">✅ 換算完成</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500');
+        statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.disabled = false; btn.innerText = "💾 儲存並同步至群組"; btn.classList.add('bg-teal-600', 'text-white', 'hover:bg-teal-700', 'active:scale-[0.98]', 'shadow-md'); btn.classList.remove('bg-gray-200', 'text-gray-500');
       }
     }
 
@@ -567,7 +643,7 @@
       const agree = document.getElementById('agreeCloseCb').checked;
 
       if (!name) return showToast("旅程名稱不得為空", "error");
-      if (!start || !end) return showToast("請選擇完整日期", "error");
+      if (start && end && new Date(start) > new Date(end)) return showToast("出發日不可晚於結束日", "error");
       if (!curStr.includes(defCur)) return showToast("預設幣別必須包含在支援外幣中", "error");
       if (IS_DRAFT && !agree) return showToast("請確認結團聲明", "error");
 
@@ -602,7 +678,7 @@
                    footer: {
                      type: 'box', layout: 'vertical',
                      contents: [
-                       { type: 'button', height: 'sm', color: '#2563EB', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }
+                       { type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }
                      ]
                    }
                  }
@@ -645,7 +721,8 @@
             if(val > 0) detailText += `\n  • ${name}: ${val.toLocaleString()} ${currency}`; 
           });
           
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n👳 ${selectedPayerName} 付\n--------- 明細 ---------${detailText}\n\n by ${currentUserProfile.displayName} `;
+          // V22.2 Alias 本體映射
+          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${rawAmount.toLocaleString()} ${currency}\n (由 ${selectedPayerName} 付)\n--- 明細 ---${detailText}\n\n (by ${localAlias || currentUserProfile.displayName})\n`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
@@ -679,7 +756,7 @@
                footer: {
                  type: 'box', layout: 'vertical',
                  contents: [
-                   { type: 'button', height: 'sm', color: '#2563EB', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }
+                   { type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }
                  ]
                }
              }
@@ -689,18 +766,24 @@
       } catch(e) { showToast("發送失敗", "error"); }
     }
 
+    // V22.2 Modal Archive
     function promptArchiveTrip() {
-      if(confirm("⚠️ 確定要結團嗎？\n將關閉新增功能並提供最終結算。")) { archiveTrip(); }
+      hapticVibrate(50);
+      document.getElementById('archiveModal').classList.remove('hidden');
     }
-
+    function closeArchiveModal() {
+      document.getElementById('archiveModal').classList.add('hidden');
+    }
     async function archiveTrip() {
+      closeArchiveModal();
       hapticVibrate([50,50]);
       try {
         const payload = { action: "archiveTrip", tripId: currentTripId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
            showToast("結團成功！", "success");
-           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n歷史紀錄仍可檢視。` }]);
+           const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
+           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n[系統結算時間：${nowStr}]\n歷史紀錄仍可檢視。` }]);
            setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
@@ -729,19 +812,23 @@
         if (!liff.isLoggedIn()) return liff.login();
 
         const urlParams = new URLSearchParams(window.location.search);
-        currentTripId = urlParams.get('tripId') || "null"; currentGroupId = liff.getContext()?.groupId || "ONLINE_TEST"; currentUserProfile = await liff.getProfile();
+        currentTripId = urlParams.get('tripId') || "null"; 
+        
+        const ctx = liff.getContext();
+        currentGroupId = ctx?.groupId || ctx?.roomId || "ONLINE_TEST"; 
+        currentUserProfile = await liff.getProfile();
 
         const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
 
-        statusLight.classList.replace('bg-yellow-400', 'bg-green-500'); statusLight.classList.remove('animate-pulse');
+        statusLight.classList.replace('bg-yellow-400', 'bg-emerald-500'); statusLight.classList.remove('animate-pulse');
 
         if (result.status === "error") { throwFatalError("存取遭拒", result.message); return; }
 
         const renderTripCard = (t, statusClass, statusText) => `
           <div onclick="navigateToTrip('${t.id}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all relative group overflow-hidden">
-            <div class="absolute inset-0 bg-blue-50 opacity-0 group-active:opacity-100 transition-opacity"></div>
+            <div class="absolute inset-0 bg-teal-50 opacity-0 group-active:opacity-100 transition-opacity"></div>
             <div class="relative z-10 flex justify-between items-start mb-1">
               <span class="font-bold text-base text-gray-800 tracking-tight">${t.name}</span>
               <span class="text-[10px] ${statusClass} px-2 py-0.5 rounded font-bold shadow-sm">${statusText}</span>
@@ -756,9 +843,9 @@
 
         if (result.status === "dashboard") {
           document.getElementById('tripNameDisplay').innerText = `總控台 (Hi, ${result.suggestedName || currentUserProfile.displayName})`;
-          let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-green-50 text-green-600 border border-green-100", "記錄中")).join('');
+          let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-emerald-50 text-emerald-600 border border-emerald-100", "記錄中")).join('');
           if (result.canCreate) {
-             html = `<button onclick="switchTab('settings')" class="w-full bg-blue-50 border border-blue-200 text-blue-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-blue-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
+             html = `<button onclick="switchTab('settings')" class="w-full bg-teal-50 border border-teal-200 text-teal-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-teal-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
              IS_CREATOR = true; IS_DRAFT = true; 
           }
           document.getElementById('dashboardActive').innerHTML = html;
@@ -769,7 +856,7 @@
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
             if(result.suggestedName) document.getElementById('realNameInput').value = result.suggestedName; 
-            document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（5字以內）。";
+            document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（限 5 個字以內）。";
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
           
@@ -779,16 +866,24 @@
           RATE_MATRIX = result.rateMatrix || {}; 
           GLOBAL_FEE_RATE = result.feeRate || 0; 
           MEMBER_LIST = result.members || []; ALL_EXPENSES = result.expenses || []; 
+          localAlias = result.suggestedName || ""; // V22.2 本體映射註冊
 
-          // [關鍵修正] 移出條件限制外，讓所有成員初始化時都能讀到旅程支援的外幣
           let curStr = result.currenciesStr || "TWD";
-          localSupportedCurrencies = new Set(curStr.split(',').map(s=>s.trim().toUpperCase()));
+          let tempSet = new Set(curStr.split(',').map(s=>s.trim().toUpperCase()));
+          localSupportedCurrencies = new Set([...tempSet].filter(c => RATE_MATRIX[c] || c === 'TWD'));
+          
           localDefaultCurrency = result.defaultCurrency || "TWD";
+          if (localDefaultCurrency !== 'TWD' && !RATE_MATRIX[localDefaultCurrency]) {
+              localDefaultCurrency = 'TWD';
+          }
+          localSupportedCurrencies.add(localDefaultCurrency);
 
           let tabsHtml = '';
-          if (!IS_DRAFT) {
+          if (!IS_DRAFT && !IS_ARCHIVED) {
              tabsHtml += `<div data-tab="add" onclick="switchTab('add')" class="tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">✏️ 記一筆帳</div>`;
-             tabsHtml += `<div data-tab="history" onclick="switchTab('history')" class="tab-btn w-1/3 text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">📜 帳務明細</div>`;
+          }
+          if (!IS_DRAFT) {
+             tabsHtml += `<div data-tab="history" onclick="switchTab('history')" class="tab-btn ${IS_ARCHIVED ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">📜 帳務明細</div>`;
           }
           if (IS_CREATOR || IS_DRAFT) {
              tabsHtml += `<div data-tab="settings" onclick="switchTab('settings')" class="tab-btn ${IS_DRAFT ? 'w-full' : 'w-1/3'} text-center py-2.5 text-gray-400 border-b-2 border-transparent cursor-pointer transition-colors font-bold">⚙️ 旅程管理</div>`;
@@ -807,11 +902,12 @@
                 const label = document.getElementById('agreeCloseLabel');
                 cb.checked = true; cb.disabled = true;
                 label.classList.add('opacity-50', 'pointer-events-none');
+                renderMembersManagement(); // V22.2 渲染團員管理
              }
           }
 
           if (IS_DRAFT) {
-             document.getElementById('tripNameDisplay').innerText = `✏️ 建立新旅程 (草稿)`;
+             document.getElementById('tripNameDisplay').innerText = `✏️ 旅遊帳本申請 (草稿)`;
              document.getElementById('tabContainer').style.display = 'flex';
              switchTab('settings'); return;
           }
@@ -835,10 +931,10 @@
           document.getElementById('tabContainer').style.display = 'flex';
           initHistoryFilters(); renderSplitDetailAdd(); 
           
-          if (IS_ARCHIVED) { document.getElementById('tab-add').style.display = 'none'; switchTab('history'); } 
+          if (IS_ARCHIVED) { switchTab('history'); } 
           else { switchTab('add'); }
         } else throw new Error(result.message || "連線失敗");
-      } catch (err) { statusLight.classList.replace('bg-yellow-400', 'bg-red-500'); statusLight.classList.remove('animate-pulse'); showToast("系統阻斷：" + err.message, "error"); hapticVibrate([50, 50, 50]); }
+      } catch (err) { statusLight.classList.replace('bg-yellow-400', 'bg-rose-500'); statusLight.classList.remove('animate-pulse'); showToast("系統阻斷：" + err.message, "error"); hapticVibrate([50, 50, 50]); }
     }
 
     initializeLiff();
