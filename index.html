@@ -808,7 +808,7 @@
            showToast("結團成功！", "success");
            localStorage.removeItem("nomad_cache_" + currentTripId);
            const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n[系統結算時間：${nowStr}]\n歷史紀錄仍可檢視。` }]);
+           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n  歷史紀錄仍可檢視\n  [結算時間：${nowStr}]`}]);
            setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
