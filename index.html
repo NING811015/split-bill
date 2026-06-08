@@ -47,7 +47,7 @@
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
       <div class="text-4xl">👋</div>
       <h2 class="text-xl font-bold text-gray-800">歡迎加入旅程</h2>
-      <p class="text-sm text-gray-500">請設定群組內可辨識的暱稱（ 5 個字以內）。</p>
+      <p class="text-sm text-gray-500">請設定群組內可辨識的暱稱（5個字內）。</p>
       <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
       <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-teal-600 text-white font-bold rounded-xl py-3 active:bg-teal-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
     </div>
@@ -127,7 +127,7 @@
         <div class="border-t border-gray-100 pt-3">
           <div class="flex justify-between items-center mb-2">
             <label class="block text-xs font-bold text-gray-500 flex items-center gap-1">💱 旅程使用幣別</label>
-            <span class="text-[9px] text-gray-400">點擊選取支援，再次點擊設為預設</span>
+            <span class="text-[9px] text-gray-400">點一次選取，點兩次設為預設，點三次取消</span>
           </div>
           <div id="currencyChipsArea" class="flex flex-wrap gap-2 mb-2"></div>
           <input type="hidden" id="setDefaultCurrency" value="TWD">
@@ -856,7 +856,7 @@
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
             if(result.suggestedName) document.getElementById('realNameInput').value = result.suggestedName; 
-            document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（5個字以內）。";
+            document.querySelector('#registrationModal p').innerText = "請設定群組內可辨識的暱稱（5個字內）。";
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
           
