@@ -47,7 +47,10 @@
     <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
       <div class="text-4xl">👋</div>
       <h2 class="text-xl font-bold text-gray-800">歡迎加入旅程</h2>
-      <p class="text-sm text-gray-500">請設定群組內可辨識的暱稱（5個字內）。</p>
+      <p class="text-sm text-gray-500">若有管理員預先建立的帳號，請直接認領，或輸入新暱稱。</p>
+      <select id="claimTargetSelect" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg mb-2 hidden">
+         <option value="">🌟 全新加入 (自訂名稱)</option>
+      </select>
       <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
       <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-teal-600 text-white font-bold rounded-xl py-3 active:bg-teal-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
     </div>
@@ -89,8 +92,13 @@
   <div class="app-container" id="scrollArea">
     <div class="bg-white shadow-sm flex flex-col sticky top-0 z-10 flex-shrink-0">
       <div class="p-3 flex items-center justify-between">
-        <h1 class="text-base font-bold text-gray-800" id="tripNameDisplay">連線中...</h1>
-        <div id="statusLight" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
+        <div class="flex items-center gap-2">
+           <h1 class="text-base font-bold text-gray-800" id="tripNameDisplay">連線中...</h1>
+        </div>
+        <div class="flex items-center gap-2">
+           <div id="brokenLinkAlert" class="hidden text-[10px] text-rose-500 font-bold bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded shadow-sm">⚠ 資料異常</div>
+           <div id="statusLight" class="w-2.5 h-2.5 rounded-full bg-yellow-400 animate-pulse shadow-sm"></div>
+        </div>
       </div>
       <div class="flex text-sm font-bold border-t border-gray-100 bg-gray-50/50" id="tabContainer" style="display: none;"></div>
     </div>
@@ -151,7 +159,10 @@
         </label>
         
         <div id="memberManagementArea" class="border-t border-gray-100 pt-4 mt-4 hidden">
-          <h3 class="text-xs font-bold text-gray-500 mb-2">🧸 旅伴管理</h3>
+          <div class="flex justify-between items-center mb-2">
+             <h3 class="text-xs font-bold text-gray-500">🧸 旅伴管理</h3>
+             <button onclick="triggerAddManual()" class="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-100 px-2 py-1 rounded hover:bg-teal-100">➕ 新增手動旅伴</button>
+          </div>
           <div id="memberListContainer" class="space-y-2"></div>
         </div>
 
@@ -210,8 +221,8 @@
       </div>
     </div>
 
-    <div class="flex flex-col h-full overflow-hidden bg-gray-50" id="view-history" style="display: none;">
-      <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-1">
+    <div class="flex flex-col h-full overflow-hidden bg-gray-50 relative" id="view-history" style="display: none;">
+      <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-1 relative">
         <div class="px-3 mb-2 flex justify-between items-center border-b border-gray-50 pb-2">
           <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">總計</span>
           <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
@@ -232,7 +243,10 @@
         </div>
       </div>
       <div class="p-3 flex-grow overflow-y-auto relative z-0">
-        <div id="historyListContainer" class="space-y-2 pb-4"></div>
+        <div id="historyListContainer" class="space-y-3 pb-8"></div>
+        <div class="sticky bottom-0 left-0 right-0 bg-gray-50/90 backdrop-blur py-1 text-center text-xs font-bold text-gray-400 mt-2 border-t border-gray-200 shadow-sm z-20">
+          共 <span id="footerCountTotal">0</span> 筆
+        </div>
       </div>
     </div>
   </div>
@@ -259,6 +273,11 @@
     let localCustomRates = {};
     let localAlias = ""; 
     let isSyncComplete = false; 
+
+    // UUID 對應字典與失聯帳號清單
+    let uuidToNameMap = {};
+    let manualAccounts = [];
+    let brokenLinks = [];
 
     const hapticVibrate = (pattern) => { 
       try {
@@ -301,7 +320,7 @@
 
     document.addEventListener('focusout', (e) => { 
       restoreMainAreaTimeout = setTimeout(() => { 
-        if(document.activeElement.tagName !== 'INPUT') { 
+        if(document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT') { 
           if (currentTab === 'add') document.getElementById('addMainArea').classList.remove('hidden');
           if (currentTab === 'add' || currentTab === 'settings') { 
             bottomBar.classList.remove('btn-hidden'); appContainer.style.height = 'calc(100% - 76px)'; 
@@ -346,12 +365,13 @@
 
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
+    // 更新篩選標籤 UI：強制 w-14 overflow-hidden 且不帶省略號
     function buildFilterHtml(type, list, selectedArr) {
-      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-12 text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
+      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] w-14 overflow-hidden whitespace-nowrap text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
-        let display = (type==='date') ? item.slice(5) : item;
+        let display = (type==='date') ? item.slice(5) : (uuidToNameMap[item] || item);
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] truncate w-14 text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
+        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] w-14 overflow-hidden whitespace-nowrap text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
       });
       return html;
     }
@@ -366,7 +386,7 @@
         if (idx > -1) { targetArr.splice(idx, 1); if(targetArr.length === 0) targetArr.push('ALL'); } 
         else { targetArr.push(value); }
       }
-      initHistoryFilters(); renderHistory();
+      initHistoryFilters(); renderHistory(); // 切換時自動重置所有展開狀態
     }
 
     function initHistoryFilters() {
@@ -378,41 +398,60 @@
 
     function renderHistory() {
       const container = document.getElementById('historyListContainer');
-      let totalTwdSum = 0; let htmlOutput = "";
+      let totalTwdSum = 0; let htmlOutput = ""; let renderedCount = 0;
 
-      ALL_EXPENSES.forEach(exp => {
+      // 嚴格依照時間降冪排序
+      let sorted = [...ALL_EXPENSES].sort((a, b) => new Date(b.date) - new Date(a.date));
+      let currentGroupDate = '';
+
+      sorted.forEach(exp => {
         let inDate = selectedDates.includes('ALL') || selectedDates.includes(exp.date); 
         let inPayer = selectedPayers.includes('ALL') || selectedPayers.includes(exp.payer);
-        let splitObj = {}; try{ splitObj = JSON.parse(exp.splitDetail) }catch(e){}
+        // 使用 DISPLAY_SPLIT 顯示原幣別 JSON
+        let splitObj = {}; try{ splitObj = JSON.parse(exp.displaySplitLocal) }catch(e){}
         let inSplitter = selectedSplitters.includes('ALL') || selectedSplitters.some(m => splitObj[m] !== undefined && Number(splitObj[m]) > 0);
 
         if (inDate && inPayer && inSplitter) {
           totalTwdSum += exp.twdAmount;
-          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(', ');
+          renderedCount++;
+
+          // 日期分群 Header
+          if (exp.date !== currentGroupDate) {
+             currentGroupDate = exp.date;
+             htmlOutput += `<div class="text-xs font-bold text-gray-500 mt-4 mb-2 flex items-center gap-1"><span class="text-base">📅</span> ${currentGroupDate.slice(5)}</div>`;
+          }
+
+          let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
+          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${uuidToNameMap[k] || k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
           
           htmlOutput += `
-            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow">
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow cursor-pointer" onclick="this.querySelector('.split-detail').classList.toggle('line-clamp-1')">
               <div class="flex justify-between items-start pr-8">
                 <div class="flex items-center gap-2">
-                  <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">${exp.date.slice(5)}</span>
                   <h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4>
                 </div>
                 <div class="text-sm font-bold text-teal-600 font-mono tabular-nums whitespace-nowrap">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans">${exp.currency}</span></div>
               </div>
               <div class="flex justify-between items-end pr-8 mt-1">
-                <div class="text-[11px] text-gray-500 whitespace-normal break-words leading-relaxed">
-                  <span class="font-bold text-gray-700">${exp.payer}</span> 先付<br>
-                  <span class="text-gray-400">${splitStr}</span>
+                <div class="text-[11px] text-gray-500 whitespace-normal break-words leading-relaxed w-full">
+                  <div class="flex justify-between items-center mb-1">
+                    <span><span class="font-bold text-gray-700">${payerDisplay}</span> 先付</span>
+                    <span class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</span>
+                  </div>
+                  <div class="text-[11px] text-gray-400 mt-1 split-detail line-clamp-1 break-all">
+                    ${splitStr}
+                  </div>
                 </div>
-                <div class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</div>
               </div>
-              ${!IS_ARCHIVED ? `<button onclick="promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-1 text-gray-300 hover:text-rose-500 p-2 active:bg-rose-50 rounded-lg transition-colors">🗑️</button>` : ''}
+              ${!IS_ARCHIVED ? `<button onclick="event.stopPropagation(); promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-1 text-gray-300 hover:text-rose-500 p-2 active:bg-rose-50 rounded-lg transition-colors">🗑️</button>` : ''}
             </div>
           `;
         }
       });
       if (htmlOutput === "") htmlOutput = `<div class="text-center text-sm text-gray-400 py-6">查無符合條件帳目</div>`;
-      container.innerHTML = htmlOutput; document.getElementById('filteredTotalTwd').innerText = totalTwdSum.toLocaleString();
+      container.innerHTML = htmlOutput; 
+      document.getElementById('filteredTotalTwd').innerText = totalTwdSum.toLocaleString();
+      document.getElementById('footerCountTotal').innerText = renderedCount;
     }
 
     let pendingDeleteId = null, pendingTripId = null;
@@ -456,13 +495,14 @@
            } catch(e){}
        });
 
-       MEMBER_LIST.forEach(name => {
-           let canDelete = !involved.has(name) && name !== localAlias; 
+       MEMBER_LIST.forEach(id => {
+           let displayName = uuidToNameMap[id] || id;
+           let canDelete = !involved.has(id) && id !== currentUserProfile.userId; 
            html += `
              <div class="flex justify-between items-center bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
-                 <span class="text-sm font-medium text-gray-700">${name}</span>
+                 <span class="text-sm font-medium text-gray-700">${displayName}</span>
                  ${canDelete ? 
-                     `<button type="button" onclick="promptRemoveMember('${name}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
+                     `<button type="button" onclick="promptRemoveMember('${id}', '${displayName}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
                      `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">無法移除(有關聯)</span>`
                  }
              </div>`;
@@ -470,24 +510,24 @@
        container.innerHTML = html;
     }
 
-    let pendingRemoveName = null;
-    function promptRemoveMember(name) {
+    let pendingRemoveId = null, pendingRemoveName = null;
+    function promptRemoveMember(id, name) {
        hapticVibrate(50);
-       pendingRemoveName = name;
+       pendingRemoveId = id; pendingRemoveName = name;
        document.getElementById('evictTargetName').innerText = name;
        document.getElementById('evictModal').classList.remove('hidden');
     }
     function closeEvictModal() {
-       pendingRemoveName = null;
+       pendingRemoveId = null; pendingRemoveName = null;
        document.getElementById('evictModal').classList.add('hidden');
     }
     async function executeRemoveMember() {
-       if(!pendingRemoveName) return;
+       if(!pendingRemoveId) return;
        hapticVibrate(50);
        const btn = document.getElementById('confirmEvictBtn');
        btn.innerText = "處理中..."; btn.disabled = true;
        try {
-         const payload = { action: "removeMember", tripId: currentTripId, targetName: pendingRemoveName, userId: currentUserProfile.userId };
+         const payload = { action: "removeMember", tripId: currentTripId, targetId: pendingRemoveId, userId: currentUserProfile.userId };
          const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
          const result = await res.json();
          if (result.status === "success") {
@@ -495,6 +535,21 @@
             setTimeout(() => window.location.reload(), 1000); 
          } else throw new Error(result.message);
        } catch(e) { showToast(e.message || "移除失敗", "error"); hapticVibrate([50, 50, 50]); closeEvictModal(); btn.innerText = "確定移除"; btn.disabled = false; }
+    }
+
+    function triggerAddManual() {
+       const name = prompt("➕ 新增手動旅伴\n請輸入旅伴暱稱 (為避免點錯人，請勿與現有成員重名)：");
+       if (!name || name.trim() === "") return;
+       
+       const payload = { action: "addManualMember", tripId: currentTripId, realName: name, userId: currentUserProfile.userId };
+       fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+         .then(res => res.json())
+         .then(res => {
+            if (res.status === "success") {
+               showToast("成功新增手動旅伴！", "success");
+               setTimeout(() => window.location.reload(), 1000);
+            } else throw new Error(res.message);
+         }).catch(e => showToast(e.message, "error"));
     }
 
     function renderCurrencyChips() {
@@ -574,37 +629,39 @@
 
       let stateBackup = {};
       Array.from(container.children).forEach(child => {
-         let pName = child.querySelector('span')?.innerText;
-         if(pName) {
+         let pId = child.querySelector('.split-checkbox')?.getAttribute('data-id') || child.querySelector('.split-input')?.getAttribute('data-id');
+         if(pId) {
             let cb = child.querySelector('.split-checkbox');
             let inp = child.querySelector('.split-input');
-            stateBackup[pName] = { checked: cb ? cb.checked : true, value: inp ? inp.value : "" };
+            stateBackup[pId] = { checked: cb ? cb.checked : true, value: inp ? inp.value : "" };
          }
       });
 
       container.innerHTML = "";
-      MEMBER_LIST.forEach(name => {
+      MEMBER_LIST.forEach(id => {
+        const name = uuidToNameMap[id] || id;
         const row = document.createElement('div'); row.className = "flex items-center justify-between bg-white border border-gray-100 h-10 px-3 rounded-lg shadow-sm transition-colors"; let inputHtml = "";
-        let backup = stateBackup[name] || { checked: true, value: "" };
+        let backup = stateBackup[id] || { checked: true, value: "" };
 
         if (mode === "EQUAL") { 
           row.setAttribute('onclick', 'toggleCheckbox(this)'); row.classList.add('cursor-pointer', 'active:bg-teal-50'); 
-          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-name="${name}" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" ${backup.checked ? 'checked' : ''}></div>`; 
+          inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-id="${id}" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" ${backup.checked ? 'checked' : ''}></div>`; 
         } 
         else if (mode === "EXACT") { 
-          inputHtml = `<div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
+          inputHtml = `<div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`; 
         } 
         else if (mode === "SHARE") { 
           let shareVal = backup.value || "1";
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="${shareVal}" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" value="${shareVal}" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`; 
         } 
         else if (mode === "PERCENT") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-name="${name}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`; 
         }
         row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">${name}</span>${inputHtml}`; container.appendChild(row);
       });
     }
 
+    // 💡 已針對 PERCENT 比例錯誤與按鈕未鎖定補強邏輯
     function calculateLivePreview() {
       const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0; const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
@@ -629,7 +686,7 @@
       btn.className = "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
 
       if (mode === "EQUAL") {
-        const checked = document.querySelectorAll('.split-checkbox:checked'); if (checked.length === 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象"; return; }
+        const checked = document.querySelectorAll('.split-checkbox:checked'); if (checked.length === 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象"; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; return; }
         let base = Math.floor(rawAmount / checked.length); let residue = rawAmount - (base * checked.length); let cIdx = 0;
         Array.from(rows).forEach(row => { const cb = row.querySelector('.split-checkbox'); const res = row.querySelector('.live-result'); if (cb && cb.checked) { let val = base + (cIdx === checked.length - 1 ? residue : 0); res.innerText = `${val.toLocaleString()}`; cIdx++; } else if (res) { res.innerText = "-"; } });
         statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; btn.innerText = "💾 儲存並同步至群組";
@@ -637,16 +694,21 @@
       else if (mode === "EXACT") {
         let currentForeignSum = 0; document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value) || 0)); let diff = rawAmount - currentForeignSum;
         if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.innerText = "💾 儲存並同步至群組"; } 
-        else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
-        else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; btn.innerText = `🔒 金額超出`; }
+        else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(0)} ${currency}</span>`; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`; } 
+        else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金額超出`; }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
         let totalMetric = 0; document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value) || 0));
-        if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`; return; }
+        if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 請輸入有效份數`; return; }
+        
+        // 🔒 PERCENT 比例加總物理鎖阻斷
         if (mode === "PERCENT" && Math.abs(totalMetric - 100) > 0.01) { 
-            statusBar.innerHTML = `<span class="text-teal-500">目前計 ${totalMetric}%</span>`; btn.innerText = `🔒 比例須等於 100%`; 
+            statusBar.innerHTML = `<span class="text-rose-500">❌ 比例須等於 100% (目前 ${totalMetric}%)</span>`; 
+            btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
+            btn.innerText = `🔒 比例須等於 100%`; 
             return; 
         }
+        
         let calculatedSum = 0; let inputs = document.querySelectorAll('.split-input');
         inputs.forEach((input, idx) => { let val = parseFloat(input.value) || 0; let assigned = Math.floor(rawAmount * (val / totalMetric)); calculatedSum += assigned; if (idx === inputs.length - 1) assigned += (rawAmount - calculatedSum); const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result'); if(res) res.innerText = `${assigned.toLocaleString()}`; });
         statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.innerText = "💾 儲存並同步至群組";
@@ -728,6 +790,11 @@
       const mode = document.getElementById('splitModeSelect').value;
       if (rawAmount <= 0) return showToast("請輸入有效金額", "error");
 
+      // 最終安全閘口防衝
+      if (mode === "PERCENT") {
+         let sum = 0; document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
+         if (Math.abs(sum - 100) > 0.01) return showToast("比例總和必須為 100%", "error");
+      }
       if (mode === "EXACT") {
          let sum = 0; document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
          if (Math.abs(rawAmount - sum) > 0.1) return showToast("分帳總額不平衡", "error");
@@ -735,16 +802,50 @@
 
       hapticVibrate(50);
       const btn = document.getElementById('submitBtn'); const desc = document.getElementById('descInput').value.trim(); const currency = document.getElementById('currencySelect').value;
-      const selectedPayerName = document.getElementById('payerSelect').value;
-      const totalTwd = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); let splitDetailObj = {};
       
-      if (mode === "EQUAL") { const checkboxes = document.querySelectorAll('.split-checkbox:checked'); let base = Math.floor(totalTwd / checkboxes.length); let residue = totalTwd - (base * checkboxes.length); checkboxes.forEach((cb, idx) => { let name = cb.getAttribute('data-name'); splitDetailObj[name] = base + (idx === checkboxes.length - 1 ? residue : 0); }); } 
-      else if (mode === "EXACT") { const inputs = document.querySelectorAll('.split-input'); inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); splitDetailObj[name] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); }); let calculatedTwdSum = Object.values(splitDetailObj).reduce((a, b) => a + b, 0); let residue = totalTwd - calculatedTwdSum; const lastPerson = Array.from(inputs).pop().getAttribute('data-name'); if(residue !== 0) splitDetailObj[lastPerson] += residue; } 
-      else if (mode === "SHARE" || mode === "PERCENT") { const inputs = document.querySelectorAll('.split-input'); let totalMetric = 0, metricMap = {}; inputs.forEach(input => { let val = parseFloat(input.value) || 0; let name = input.getAttribute('data-name'); metricMap[name] = val; totalMetric += val; }); let calculatedSum = 0; MEMBER_LIST.forEach(name => { splitDetailObj[name] = Math.round(totalTwd * (metricMap[name] / totalMetric)); calculatedSum += splitDetailObj[name]; }); let residue = totalTwd - calculatedSum; if(residue !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residue; }
+      const selectedPayerId = document.getElementById('payerSelect').value;
+      const selectedPayerName = document.getElementById('payerSelect').options[document.getElementById('payerSelect').selectedIndex].text;
+      
+      const totalTwd = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); 
+      
+      // UUID 雙軌儲存邏輯 (Col 10 TWD, Col 13 RAW)
+      let splitDetailObj = {}; 
+      let displaySplitLocalObj = {}; 
+      
+      if (mode === "EQUAL") { 
+         const checkboxes = document.querySelectorAll('.split-checkbox:checked'); let base = Math.floor(totalTwd / checkboxes.length); let residue = totalTwd - (base * checkboxes.length); let rawBase = Math.floor(rawAmount / checkboxes.length); let rawResidue = rawAmount - (rawBase * checkboxes.length);
+         checkboxes.forEach((cb, idx) => { 
+             let id = cb.getAttribute('data-id'); 
+             splitDetailObj[id] = base + (idx === checkboxes.length - 1 ? residue : 0); 
+             displaySplitLocalObj[id] = rawBase + (idx === checkboxes.length - 1 ? rawResidue : 0);
+         }); 
+      } 
+      else if (mode === "EXACT") { 
+         const inputs = document.querySelectorAll('.split-input'); 
+         inputs.forEach(input => { 
+             let val = parseFloat(input.value) || 0; let id = input.getAttribute('data-id'); 
+             displaySplitLocalObj[id] = val;
+             splitDetailObj[id] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); 
+         }); 
+         let calculatedTwdSum = Object.values(splitDetailObj).reduce((a, b) => a + b, 0); let residue = totalTwd - calculatedTwdSum; 
+         const lastPerson = Array.from(inputs).pop().getAttribute('data-id'); if(residue !== 0) splitDetailObj[lastPerson] += residue; 
+      } 
+      else if (mode === "SHARE" || mode === "PERCENT") { 
+         const inputs = document.querySelectorAll('.split-input'); let totalMetric = 0, metricMap = {}; 
+         inputs.forEach(input => { let val = parseFloat(input.value) || 0; let id = input.getAttribute('data-id'); metricMap[id] = val; totalMetric += val; }); 
+         let calculatedSumTwd = 0; let calculatedSumRaw = 0;
+         MEMBER_LIST.forEach(id => { 
+             splitDetailObj[id] = Math.round(totalTwd * (metricMap[id] / totalMetric)); calculatedSumTwd += splitDetailObj[id]; 
+             displaySplitLocalObj[id] = Math.floor(rawAmount * (metricMap[id] / totalMetric)); calculatedSumRaw += displaySplitLocalObj[id];
+         }); 
+         let residueTwd = totalTwd - calculatedSumTwd; let residueRaw = rawAmount - calculatedSumRaw;
+         if(residueTwd !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residueTwd; 
+         if(residueRaw !== 0 && MEMBER_LIST.length > 0) displaySplitLocalObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residueRaw; 
+      }
 
       btn.disabled = true; btn.innerText = "⏳ 儲存交易中...";
       try {
-        const payload = { action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: currentUserProfile.userId, payerName: selectedPayerName, description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, splitDetailString: JSON.stringify(splitDetailObj) };
+        const payload = { action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: selectedPayerId, description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, splitDetailString: JSON.stringify(splitDetailObj), displaySplitLocalString: JSON.stringify(displaySplitLocalObj) };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("儲存成功！", "success");
@@ -753,14 +854,15 @@
           let detailArr = []; const rows = document.getElementById('splitDetailContainer').children;
           Array.from(rows).forEach(row => { 
             let name = row.querySelector('span.font-medium').innerText; let val = 0;
-            if (mode === "EXACT") { val = parseFloat(row.querySelector('.split-input').value) || 0; } 
+            let input = row.querySelector('.split-input');
+            if (mode === "EXACT") { val = parseFloat(input.value) || 0; } 
             else { 
               let resSpan = row.querySelector('.live-result'); 
               if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
             }
             if(val > 0) detailArr.push(`${name} ${val.toLocaleString()}`); 
           });
-          const detailText = detailArr.join("｜");
+          const detailText = detailArr.join(" | ");
           
           const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           await liff.sendMessages([{ type: 'text', text: notifyMsg }]);
@@ -815,11 +917,14 @@
     }
 
     async function submitRegistration() {
+      const claimSelect = document.getElementById('claimTargetSelect');
+      const claimId = claimSelect && !claimSelect.classList.contains('hidden') ? claimSelect.value : null;
       const nickname = document.getElementById('realNameInput').value.trim();
-      if (!nickname) { showToast("請輸入暱稱", "error"); return; }
+      
+      if (!claimId && !nickname) { showToast("請選擇認領帳號或輸入新暱稱", "error"); return; }
       const btn = document.getElementById('registerBtn'); btn.disabled = true; btn.innerText = "註冊中...";
       try {
-        const payload = { action: "registerUser", tripId: currentTripId, userId: currentUserProfile.userId, realName: nickname };
+        const payload = { action: "registerUser", tripId: currentTripId, userId: currentUserProfile.userId, realName: nickname, claimTargetId: claimId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("註冊成功", "success");
@@ -896,7 +1001,6 @@
           let html = result.activeTrips.length === 0 ? `<p class="text-sm text-gray-400 text-center py-6">目前無進行中的旅程</p>` : result.activeTrips.map(t => renderTripCard(t, "bg-emerald-50 text-emerald-600 border border-emerald-100", "記錄中")).join('');
           
           if (result.canCreate) {
-             // 🟢 前端環境阻斷：拒絕從非群組開團
              if (/^[CR]/.test(currentGroupId)) {
                 html = `<button onclick="switchTab('settings')" class="w-full bg-teal-50 border border-teal-200 text-teal-600 font-bold rounded-xl py-3 mb-4 shadow-sm active:bg-teal-100 transition-colors flex items-center justify-center gap-2"><span>➕</span> 建立新旅程</button>` + html;
                 IS_CREATOR = true; IS_DRAFT = true; 
@@ -912,16 +1016,33 @@
 
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
+            // 若有手動帳號，顯示下拉認領選單
+            if (result.manualAccounts && result.manualAccounts.length > 0) {
+              const claimSelect = document.getElementById('claimTargetSelect');
+              claimSelect.classList.remove('hidden');
+              let opts = `<option value="">🌟 全新加入 (建立新帳號)</option>`;
+              result.manualAccounts.forEach(m => opts += `<option value="${m.id}">👉 認領帳號：${m.name}</option>`);
+              claimSelect.innerHTML = opts;
+            }
             document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName; 
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
           
+          // 若有斷鏈帳號，顯示警告
+          if (result.brokenLinks && result.brokenLinks.length > 0) {
+              document.getElementById('brokenLinkAlert').classList.remove('hidden');
+              console.warn("Broken Links Detected:", result.brokenLinks);
+          }
+
           IS_ARCHIVED = (result.tripStatus === 'ARCHIVED');
           IS_DRAFT = (result.tripStatus === 'DRAFT');
           IS_CREATOR = result.isCreator;
           RATE_MATRIX = result.rateMatrix || {}; 
           GLOBAL_FEE_RATE = result.feeRate || 0; 
-          MEMBER_LIST = result.members || []; ALL_EXPENSES = result.expenses || []; 
+          
+          uuidToNameMap = result.uuidToNameMap || {};
+          MEMBER_LIST = result.members || []; 
+          ALL_EXPENSES = result.expenses || []; 
           localAlias = result.suggestedName || ""; 
 
           let curStr = result.currenciesStr || "TWD";
@@ -963,9 +1084,9 @@
           const payerSel = document.getElementById('payerSelect');
           
           let prevSelectedPayer = payerSel.value;
-          payerSel.innerHTML = MEMBER_LIST.map(m => `<option value="${m}">${m}</option>`).join('');
+          payerSel.innerHTML = MEMBER_LIST.map(id => `<option value="${id}">${uuidToNameMap[id] || id}</option>`).join('');
           if(MEMBER_LIST.includes(prevSelectedPayer)) payerSel.value = prevSelectedPayer;
-          else if (result.suggestedName && MEMBER_LIST.includes(result.suggestedName)) { payerSel.value = result.suggestedName; }
+          else if (currentUserProfile && MEMBER_LIST.includes(currentUserProfile.userId)) { payerSel.value = currentUserProfile.userId; }
           
           const curSelect = document.getElementById('currencySelect');
           let prevSelectedCur = curSelect.value;
