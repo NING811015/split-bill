@@ -49,10 +49,23 @@
       <h2 class="text-xl font-bold text-gray-800">歡迎加入旅程</h2>
       <p class="text-sm text-gray-500">若有管理員預先建立的帳號，請直接認領，或輸入新暱稱。</p>
       <select id="claimTargetSelect" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg mb-2 hidden">
-         <option value="">🌟 全新加入 (自訂名稱)</option>
+         <option value="">🌟 全新加入 (建立新帳號)</option>
       </select>
       <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
       <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-teal-600 text-white font-bold rounded-xl py-3 active:bg-teal-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
+    </div>
+  </div>
+
+  <div id="manualMemberModal" class="absolute inset-0 z-[120] modal-overlay flex flex-col justify-center items-center p-6 hidden">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center space-y-4">
+      <div class="text-4xl">🧸</div>
+      <h2 class="text-xl font-bold text-gray-800">新增手動旅伴</h2>
+      <p class="text-sm text-gray-500">請輸入旅伴暱稱 (為避免點錯人，請勿與現有成員重名)</p>
+      <input type="text" id="manualNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeManualModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">取消</button>
+        <button onclick="submitManualMember()" class="w-1/2 bg-teal-600 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-teal-700 transition-transform active:scale-[0.98]">確定新增</button>
+      </div>
     </div>
   </div>
 
@@ -365,7 +378,7 @@
 
     function navigateToTrip(tId) { hapticVibrate(50); window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
-    // 更新篩選標籤 UI：強制 w-14 overflow-hidden 且不帶省略號
+    // 篩選標籤 UI：強制 w-14 overflow-hidden 且不帶省略號
     function buildFilterHtml(type, list, selectedArr) {
       let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] w-14 overflow-hidden whitespace-nowrap text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
@@ -396,6 +409,7 @@
       document.getElementById('splitterFilters').innerHTML = buildFilterHtml('splitter', MEMBER_LIST, selectedSplitters);
     }
 
+    // FIX: 替換 line-clamp-1 為 truncate，並設定點擊展開切換 break-words
     function renderHistory() {
       const container = document.getElementById('historyListContainer');
       let totalTwdSum = 0; let htmlOutput = ""; let renderedCount = 0;
@@ -425,7 +439,7 @@
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${uuidToNameMap[k] || k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
           
           htmlOutput += `
-            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow cursor-pointer" onclick="this.querySelector('.split-detail').classList.toggle('line-clamp-1')">
+            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow cursor-pointer" onclick="const d = this.querySelector('.split-detail'); d.classList.toggle('truncate'); d.classList.toggle('whitespace-normal'); d.classList.toggle('break-words');">
               <div class="flex justify-between items-start pr-8">
                 <div class="flex items-center gap-2">
                   <h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4>
@@ -438,7 +452,7 @@
                     <span><span class="font-bold text-gray-700">${payerDisplay}</span> 先付</span>
                     <span class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</span>
                   </div>
-                  <div class="text-[11px] text-gray-400 mt-1 split-detail line-clamp-1 break-all">
+                  <div class="text-[11px] text-gray-400 mt-1 split-detail truncate">
                     ${splitStr}
                   </div>
                 </div>
@@ -537,9 +551,18 @@
        } catch(e) { showToast(e.message || "移除失敗", "error"); hapticVibrate([50, 50, 50]); closeEvictModal(); btn.innerText = "確定移除"; btn.disabled = false; }
     }
 
+    // FIX: 改用自製 Modal 取代 prompt()
     function triggerAddManual() {
-       const name = prompt("➕ 新增手動旅伴\n請輸入旅伴暱稱 (為避免點錯人，請勿與現有成員重名)：");
-       if (!name || name.trim() === "") return;
+       hapticVibrate(50);
+       document.getElementById('manualNameInput').value = '';
+       document.getElementById('manualMemberModal').classList.remove('hidden');
+    }
+    function closeManualModal() {
+       document.getElementById('manualMemberModal').classList.add('hidden');
+    }
+    function submitManualMember() {
+       const name = document.getElementById('manualNameInput').value.trim();
+       if (!name) return showToast("請輸入暱稱", "error");
        
        const payload = { action: "addManualMember", tripId: currentTripId, realName: name, userId: currentUserProfile.userId };
        fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
@@ -547,6 +570,7 @@
          .then(res => {
             if (res.status === "success") {
                showToast("成功新增手動旅伴！", "success");
+               closeManualModal();
                setTimeout(() => window.location.reload(), 1000);
             } else throw new Error(res.message);
          }).catch(e => showToast(e.message, "error"));
@@ -661,7 +685,6 @@
       });
     }
 
-    // 💡 已針對 PERCENT 比例錯誤與按鈕未鎖定補強邏輯
     function calculateLivePreview() {
       const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0; const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
@@ -701,7 +724,6 @@
         let totalMetric = 0; document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value) || 0));
         if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`; btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 請輸入有效份數`; return; }
         
-        // 🔒 PERCENT 比例加總物理鎖阻斷
         if (mode === "PERCENT" && Math.abs(totalMetric - 100) > 0.01) { 
             statusBar.innerHTML = `<span class="text-rose-500">❌ 比例須等於 100% (目前 ${totalMetric}%)</span>`; 
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
@@ -790,7 +812,6 @@
       const mode = document.getElementById('splitModeSelect').value;
       if (rawAmount <= 0) return showToast("請輸入有效金額", "error");
 
-      // 最終安全閘口防衝
       if (mode === "PERCENT") {
          let sum = 0; document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
          if (Math.abs(sum - 100) > 0.01) return showToast("比例總和必須為 100%", "error");
@@ -808,7 +829,6 @@
       
       const totalTwd = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); 
       
-      // UUID 雙軌儲存邏輯 (Col 10 TWD, Col 13 RAW)
       let splitDetailObj = {}; 
       let displaySplitLocalObj = {}; 
       
