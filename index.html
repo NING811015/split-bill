@@ -1036,15 +1036,32 @@
 
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
-            // 若有手動帳號，顯示下拉認領選單
             if (result.manualAccounts && result.manualAccounts.length > 0) {
               const claimSelect = document.getElementById('claimTargetSelect');
               claimSelect.classList.remove('hidden');
-              let opts = `<option value="">🌟 全新加入 (建立新帳號)</option>`;
-              result.manualAccounts.forEach(m => opts += `<option value="${m.id}">👉 認領帳號：${m.name}</option>`);
+              
+              // 1. 反轉排序：待認領在上，自訂在下
+              let opts = '';
+              result.manualAccounts.forEach(m => opts += `<option value="${m.id}" data-name="${m.name}">👉 認領：${m.name}</option>`);
+              opts += `<option value="">➕ 自訂新帳號</option>`;
               claimSelect.innerHTML = opts;
+              
+              // 2. 建立連動機制
+              claimSelect.onchange = (e) => {
+                 if (e.target.value) {
+                     // 選擇認領時，自動帶入該假帳號名稱
+                     document.getElementById('realNameInput').value = e.target.options[e.target.selectedIndex].getAttribute('data-name');
+                 } else {
+                     // 選擇自訂時，帶回 LINE 本名
+                     document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName;
+                 }
+              };
+              // 3. 觸發初始連動 (預設選中第一個待認領帳號)
+              claimSelect.dispatchEvent(new Event('change'));
+            } else {
+              // 若無待認領帳號，直接帶入 LINE 本名
+              document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName; 
             }
-            document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName; 
             document.getElementById('registrationModal').classList.remove('hidden'); return; 
           }
           
