@@ -105,16 +105,16 @@
   <div id="summaryModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3 transform transition-all flex flex-col max-h-[80vh]">
       <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
-        <h3 class="text-lg font-bold text-teal-600 flex items-center">🗿 目前結算</h3>
+        <h3 class="text-lg font-bold text-teal-600 flex items-center">🪧 目前結算</h3>
         <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
       </div>
       <div class="overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
         載入中...
       </div>
-      <div class="pt-2 flex-shrink-0 border-t border-gray-50">
+      <div class="pt-2 flex-shrink-0 border-t border-gray-50 flex flex-col gap-2">
+        <div class="text-center text-[10px] text-gray-400 font-mono" id="summaryTimestamp"></div>
         <button onclick="closeSummaryModal()" class="w-full bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">關閉</button>
       </div>
-      <div class="text-center text-[9px] text-gray-400 font-mono mt-1 flex-shrink-0" id="summaryTimestamp"></div>
     </div>
   </div>
 
@@ -250,10 +250,8 @@
       </div>
     </div>
 
-<div class="flex flex-col h-full overflow-hidden bg-gray-50 relative" id="view-history" style="display: none;">
-      <!-- pb-0 拔除篩選器容器下方的多餘物理空白 -->
+    <div class="flex flex-col h-full overflow-hidden bg-gray-50 relative" id="view-history" style="display: none;">
       <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-0 relative">
-        <!-- 移除 pb-2 與 border-b，改由小計列統一收尾，消滅按鈕上方的黑洞空白 -->
         <div class="space-y-2 px-3 pb-1">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">📅 日期</span>
@@ -268,16 +266,15 @@
             <div id="splitterFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
           </div>
         </div>
-        <!-- 🟢 修正：恢復小計列舒適高度 (py-2.5)，按鈕改為優雅木頭色細邊框 (border-amber-700 text-amber-800 bg-transparent) -->
         <div class="px-3 py-2.5 mt-1 flex justify-between items-center border-t border-gray-100">
-          <button onclick="openSummaryModal()" class="text-[11px] border border-amber-700 text-amber-800 bg-transparent font-bold px-2.5 py-1 rounded-lg active:bg-amber-50/50 transition-colors tracking-widest">📊 結算建議</button>
+          <button onclick="openSummaryModal()" class="text-[11px] border border-amber-700 text-amber-800 bg-transparent font-bold px-2.5 py-1 rounded-lg active:bg-amber-50/50 transition-colors tracking-widest">🪧 目前結算</button>
           <div class="flex items-baseline gap-1">
             <span class="text-[12px] font-bold text-gray-400 uppercase tracking-wider">小計</span>
             <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
           </div>
         </div>
       </div>
-      <div class="p-3 flex-grow overflow-y-auto relative z-0">
+      <div class="px-3 pt-1 pb-3 flex-grow overflow-y-auto relative z-0">
         <div id="historyListContainer" class="space-y-3 pb-8"></div>
         <div class="sticky bottom-0 left-0 right-0 bg-gray-50/90 backdrop-blur py-1 text-center text-xs font-bold text-gray-400 mt-2 border-t border-gray-200 shadow-sm z-20">
           共 <span id="footerCountTotal">0</span> 筆
@@ -400,7 +397,6 @@
     function navigateToTrip(tId) { hapticVibrate(50);
       window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
-    // 篩選標籤 UI：強制 w-12 overflow-hidden 且不帶省略號，精細調校 px-1.5 邊距優化視覺
     function buildFilterHtml(type, list, selectedArr) {
       let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-1.5 py-1 border rounded-md text-[11px] w-12 overflow-hidden whitespace-nowrap text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
@@ -425,7 +421,6 @@
         }
       }
       initHistoryFilters(); renderHistory();
-      // 切換時自動重置所有展開狀態
     }
 
     function initHistoryFilters() {
@@ -435,11 +430,9 @@
       document.getElementById('splitterFilters').innerHTML = buildFilterHtml('splitter', MEMBER_LIST, selectedSplitters);
     }
 
-    // FIX: 替換 line-clamp-1 為 truncate，並設定點擊展開切換 break-words
     function renderHistory() {
       const container = document.getElementById('historyListContainer');
       let totalTwdSum = 0; let htmlOutput = ""; let renderedCount = 0;
-      // 嚴格依照時間降冪排序
       let sorted = [...ALL_EXPENSES].sort((a, b) => new Date(b.date) - new Date(a.date));
       let currentGroupDate = '';
 
@@ -449,7 +442,6 @@
         let inPayer = selectedPayers.includes('ALL') || selectedPayers.some(m => (uuidToNameMap[m] || m) === expPayerName);
         
         let splitObj = {}; try{ splitObj = JSON.parse(exp.displaySplitLocal) }catch(e){}
-        // 解析 TWD 實際分攤金額供動態總計使用
         let twdSplitObj = {}; try{ twdSplitObj = JSON.parse(exp.splitDetail) }catch(e){} 
         
         let inSplitter = selectedSplitters.includes('ALL') || selectedSplitters.some(m => {
@@ -460,7 +452,6 @@
         });
 
         if (inDate && inPayer && inSplitter) {
-          // 動態計算總計：若為全部則加總整筆帳單；若有指定分攤人，則只加總該些人的 TWD 分攤額
           if (selectedSplitters.includes('ALL')) {
             totalTwdSum += exp.twdAmount;
           } else {
@@ -475,28 +466,29 @@
           }
           renderedCount++;
 
-          // 日期分群 Header
+          // 💡 縮小 Date Header 的 mt-4 到 mt-2 減少空白
           if (exp.date !== currentGroupDate) {
              currentGroupDate = exp.date;
-             htmlOutput += `<div class="text-xs font-bold text-gray-500 mt-4 mb-2 flex items-center gap-1"><span class="text-base">📅</span> ${currentGroupDate.slice(5)}</div>`;
+             htmlOutput += `<div class="text-xs font-bold text-gray-500 mt-2 mb-1.5 flex items-center gap-1"><span class="text-base">📅</span> ${currentGroupDate.slice(5)}</div>`;
           }
 
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
-          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="text-gray-500">${uuidToNameMap[k] ||
-          k}:</span><span class="font-mono tabular-nums text-gray-700">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
+          // 💡 分攤人與金額加上粗體強調 (font-bold)
+          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-gray-700">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-gray-800">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
           
+          // 💡 卡片內縮減為 px-3 py-2
           htmlOutput += `
-            <div class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow cursor-pointer" onclick="const d = this.querySelector('.split-detail'); d.classList.toggle('truncate'); d.classList.toggle('whitespace-normal'); d.classList.toggle('break-words');">
+            <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow cursor-pointer" onclick="const d = this.querySelector('.split-detail'); d.classList.toggle('truncate'); d.classList.toggle('whitespace-normal'); d.classList.toggle('break-words');">
               <div class="flex justify-between items-start pr-8">
                 <div class="flex items-center gap-2">
-                  <h4 class="text-sm font-bold text-gray-800">${exp.desc}</h4>
+                  <h4 class="text-base font-bold text-gray-800">${exp.desc}</h4>
                 </div>
                 <div class="text-sm font-bold text-teal-600 font-mono tabular-nums whitespace-nowrap">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans">${exp.currency}</span></div>
               </div>
               <div class="flex justify-between items-end pr-8 mt-1">
                 <div class="text-[11px] text-gray-500 whitespace-normal break-words leading-relaxed w-full">
                   <div class="flex justify-between items-center mb-1">
-                    <span><span class="font-bold text-gray-700">${payerDisplay}</span> 先付</span>
+                    <span><span class="text-gray-700">${payerDisplay}</span> 先付</span>
                     <span class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</span>
                   </div>
                   <div class="text-[11px] text-gray-400 mt-1 split-detail truncate">
@@ -1238,13 +1230,12 @@
     function openSummaryModal() {
        hapticVibrate(50);
        let displayStr = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
-       // 將換行的 NT$ 轉為單行，不破壞後端原本的格式
        displayStr = displayStr.replace(/\n\s*(NT\$)/g, '  $1');
        document.getElementById('summaryContentDisplay').innerText = displayStr;
        
-       // 產生時間戳記
-       const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
-       document.getElementById('summaryTimestamp').innerText = `${nowStr}`;
+       const d = new Date();
+       const nowStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+       document.getElementById('summaryTimestamp').innerText = nowStr;
        
        document.getElementById('summaryModal').classList.remove('hidden');
     }
