@@ -102,6 +102,21 @@
     </div>
   </div>
 
+  <div id="summaryModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
+    <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 transform transition-all flex flex-col max-h-[80vh]">
+      <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
+        <h3 class="text-lg font-bold text-teal-600 flex items-center">📊 目前大局結算</h3>
+        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
+      </div>
+      <div class="overflow-y-auto flex-grow text-sm text-gray-600 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
+        載入中...
+      </div>
+      <div class="pt-2 flex-shrink-0 border-t border-gray-50">
+        <button onclick="closeSummaryModal()" class="w-full bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <div class="app-container" id="scrollArea">
     <div class="bg-white shadow-sm flex flex-col sticky top-0 z-10 flex-shrink-0">
       <div class="p-3 flex items-center justify-between">
@@ -237,7 +252,10 @@
     <div class="flex flex-col h-full overflow-hidden bg-gray-50 relative" id="view-history" style="display: none;">
       <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-1 relative">
         <div class="px-3 mb-2 flex justify-between items-center border-b border-gray-50 pb-2">
-          <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">總計</span>
+          <div class="flex items-center gap-2">
+             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">總計</span>
+             <button onclick="openSummaryModal()" class="text-[10px] bg-teal-50 text-teal-600 font-bold px-2 py-0.5 rounded border border-teal-100 active:bg-teal-100 transition-colors shadow-sm">📊 結算</button>
+          </div>
           <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
         </div>
         <div class="space-y-2 px-3 pb-1">
@@ -285,6 +303,7 @@
     let localCustomRates = {};
     let localAlias = ""; 
     let isSyncComplete = false;
+    let LIVE_SUMMARY = "";
     // UUID 對應字典與失聯帳號清單
     let uuidToNameMap = {};
     let manualAccounts = [];
@@ -579,7 +598,6 @@
        btn.innerText = "確定移除"; btn.disabled = false; }
     }
 
-    // FIX: 改用自製 Modal 取代 prompt()
     function triggerAddManual() {
        hapticVibrate(50);
        document.getElementById('manualNameInput').value = '';
@@ -824,7 +842,6 @@
            localStorage.removeItem("nomad_cache_" + currentTripId);
            if (IS_DRAFT) {
              const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${result.newTripId}`;
-             // 🛡️ Fire-and-forget: 移除 await 並加上 catch
              liff.sendMessages([{
                  type: 'flex', altText: `開啟帳本｜${name}`,
                  contents: {
@@ -840,7 +857,6 @@
                    footer: { type: 'box', layout: 'vertical', contents: [{ type: 'button', height: 'sm', color: '#0D9488', style: 'primary', action: { type: 'uri', label: '開啟帳本', uri: tripUrl } }] }
                  }
              }]).catch(err => console.warn("群組推播失敗:", err));
-             // 不受轉址死鎖限制，500ms秒關視窗
              setTimeout(() => liff.closeWindow(), 500);
            } else {
              setTimeout(()=> window.location.reload(), 800);
@@ -932,7 +948,6 @@
           const detailText = detailArr.join(" | ");
           
           const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
-          // 🛡️ Fire-and-forget
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
           setTimeout(() => liff.closeWindow(), 500);
         } else throw new Error();
@@ -949,9 +964,7 @@
          const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
          if (!name) return showToast("旅程名稱不可為空", "error");
          
-         // 💡 智慧分流判定 (Smart Message Dispatcher)
          if (currentGroupId && currentGroupId === tripGroupId) {
-             // 航道 A：在群組內，走 LIFF 免費發送
              liff.sendMessages([{
                  type: 'flex', altText: `開啟帳本｜${name}`,
                  contents: {
@@ -969,7 +982,6 @@
              }]).catch(e => console.warn("LIFF推播失敗", e));
              showToast("已將帳本卡片重發至群組", "success");
          } else {
-             // 航道 B：在總控台/私聊，走 Backend Push (扣 1 筆額度)
              const btn = document.querySelector('button[onclick="sendInviteLink()"]');
              const originalText = btn.innerText;
              btn.innerText = "⏳ 遠端空投中...";
@@ -1111,31 +1123,24 @@
               const claimSelect = document.getElementById('claimTargetSelect');
               claimSelect.classList.remove('hidden');
               
-              // 1. 反轉排序：待認領在上，自訂在下
               let opts = '';
               result.manualAccounts.forEach(m => opts += `<option value="${m.id}" data-name="${m.name}">👉 認領：${m.name}</option>`);
               opts += `<option value="">➕ 自訂新帳號</option>`;
               claimSelect.innerHTML = opts;
-              // 2. 建立連動機制
               claimSelect.onchange = (e) => {
                  if (e.target.value) {
-                     // 選擇認領時，自動帶入該假帳號名稱
                      document.getElementById('realNameInput').value = e.target.options[e.target.selectedIndex].getAttribute('data-name');
                  } else {
-                     // 選擇自訂時，帶回 LINE 本名
                      document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName;
                  }
               };
-              // 3. 觸發初始連動 (預設選中第一個待認領帳號)
               claimSelect.dispatchEvent(new Event('change'));
             } else {
-              // 若無待認領帳號，直接帶入 LINE 本名
               document.getElementById('realNameInput').value = result.suggestedName || currentUserProfile.displayName; 
             }
             document.getElementById('registrationModal').classList.remove('hidden'); return;
           }
           
-          // 若有斷鏈帳號，顯示警告
           if (result.brokenLinks && result.brokenLinks.length > 0) {
               document.getElementById('brokenLinkAlert').classList.remove('hidden');
               console.warn("Broken Links Detected:", result.brokenLinks);
@@ -1151,7 +1156,8 @@
           ALL_EXPENSES = result.expenses || []; 
           localAlias = result.suggestedName || "";
           
-          tripGroupId = result.tripGroupId || null; // 🟢 寫入群組綁定 ID 提供智慧分流
+          tripGroupId = result.tripGroupId || null; 
+          LIVE_SUMMARY = result.liveSummary || "";
 
           let curStr = result.currenciesStr || "TWD";
           let tempSet = new Set(curStr.split(',').map(s=>s.trim().toUpperCase()));
@@ -1223,6 +1229,15 @@
              else switchTab('add');
           }
         }
+    }
+
+    function openSummaryModal() {
+       hapticVibrate(50);
+       document.getElementById('summaryContentDisplay').innerText = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
+       document.getElementById('summaryModal').classList.remove('hidden');
+    }
+    function closeSummaryModal() {
+       document.getElementById('summaryModal').classList.add('hidden');
     }
 
     document.addEventListener('click', function(e) {
