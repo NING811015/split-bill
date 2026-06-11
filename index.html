@@ -424,7 +424,11 @@
         let inDate = selectedDates.includes('ALL') || selectedDates.includes(exp.date); 
         let expPayerName = uuidToNameMap[exp.payer] || exp.payer;
         let inPayer = selectedPayers.includes('ALL') || selectedPayers.some(m => (uuidToNameMap[m] || m) === expPayerName);
+        
         let splitObj = {}; try{ splitObj = JSON.parse(exp.displaySplitLocal) }catch(e){}
+        // 解析 TWD 實際分攤金額供動態總計使用
+        let twdSplitObj = {}; try{ twdSplitObj = JSON.parse(exp.splitDetail) }catch(e){} 
+        
         let inSplitter = selectedSplitters.includes('ALL') || selectedSplitters.some(m => {
           let filterName = uuidToNameMap[m] || m;
           return Object.entries(splitObj).some(([k, v]) => {
@@ -433,7 +437,19 @@
         });
 
         if (inDate && inPayer && inSplitter) {
-          totalTwdSum += exp.twdAmount;
+          // 動態計算總計：若為全部則加總整筆帳單；若有指定分攤人，則只加總該些人的 TWD 分攤額
+          if (selectedSplitters.includes('ALL')) {
+            totalTwdSum += exp.twdAmount;
+          } else {
+            selectedSplitters.forEach(m => {
+              let filterName = uuidToNameMap[m] || m;
+              Object.entries(twdSplitObj).forEach(([k, v]) => {
+                if ((uuidToNameMap[k] || k) === filterName) {
+                  totalTwdSum += Number(v);
+                }
+              });
+            });
+          }
           renderedCount++;
 
           // 日期分群 Header
