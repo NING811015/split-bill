@@ -103,14 +103,15 @@
   </div>
 
   <div id="summaryModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
-    <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-4 transform transition-all flex flex-col max-h-[80vh]">
+    <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3 transform transition-all flex flex-col max-h-[80vh]">
       <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
         <h3 class="text-lg font-bold text-teal-600 flex items-center">📊 目前大局結算</h3>
         <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
       </div>
-      <div class="overflow-y-auto flex-grow text-sm text-gray-600 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
+      <div class="overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
         載入中...
       </div>
+      <div class="text-center text-[10px] text-gray-400 font-mono" id="summaryTimestamp"></div>
       <div class="pt-2 flex-shrink-0 border-t border-gray-50">
         <button onclick="closeSummaryModal()" class="w-full bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">關閉</button>
       </div>
@@ -251,14 +252,7 @@
 
     <div class="flex flex-col h-full overflow-hidden bg-gray-50 relative" id="view-history" style="display: none;">
       <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-1 relative">
-        <div class="px-3 mb-2 flex justify-between items-center border-b border-gray-50 pb-2">
-          <div class="flex items-center gap-2">
-             <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">總計</span>
-             <button onclick="openSummaryModal()" class="text-[10px] bg-teal-50 text-teal-600 font-bold px-2 py-0.5 rounded border border-teal-100 active:bg-teal-100 transition-colors shadow-sm">📊 結算</button>
-          </div>
-          <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
-        </div>
-        <div class="space-y-2 px-3 pb-1">
+        <div class="space-y-2 px-3 pb-2 border-b border-gray-100">
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">📅 日期</span>
             <div id="dateFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
@@ -270,6 +264,13 @@
           <div class="flex items-center gap-2">
             <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">🛍️ 分攤</span>
             <div id="splitterFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
+          </div>
+        </div>
+        <div class="px-3 pt-2 pb-1 flex justify-end items-center gap-2">
+          <button onclick="openSummaryModal()" class="text-[11px] bg-slate-700 text-white font-bold px-3 py-1 rounded-lg active:bg-slate-800 transition-colors shadow-sm tracking-widest">📊結算</button>
+          <div class="flex items-baseline gap-1">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">總計</span>
+            <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
           </div>
         </div>
       </div>
@@ -1233,7 +1234,15 @@
 
     function openSummaryModal() {
        hapticVibrate(50);
-       document.getElementById('summaryContentDisplay').innerText = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
+       let displayStr = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
+       // 將換行的 NT$ 轉為單行，不破壞後端原本的格式
+       displayStr = displayStr.replace(/\n\s*(NT\$)/g, '  $1');
+       document.getElementById('summaryContentDisplay').innerText = displayStr;
+       
+       // 產生時間戳記
+       const nowStr = new Date().toLocaleString('zh-TW', { hour12: false });
+       document.getElementById('summaryTimestamp').innerText = `結算時間：${nowStr}`;
+       
        document.getElementById('summaryModal').classList.remove('hidden');
     }
     function closeSummaryModal() {
