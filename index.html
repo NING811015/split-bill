@@ -267,7 +267,7 @@
           </div>
         </div>
         <div class="px-3 py-2.5 mt-1 flex justify-between items-center border-t border-gray-100">
-          <button onclick="openSummaryModal()" class="text-[11px] border border-amber-700 text-amber-800 bg-transparent font-bold px-2.5 py-1 rounded-lg active:bg-amber-50/50 transition-colors tracking-widest">🪧 目前結算</button>
+          <button onclick="openSummaryModal()" class="text-[12px] border border-green-800 text-green-900 bg-transparent font-bold px-2.5 py-1 rounded-lg active:bg-amber-50/50 transition-colors tracking-widest">目前結算</button>
           <div class="flex items-baseline gap-1">
             <span class="text-[12px] font-bold text-gray-400 uppercase tracking-wider">小計</span>
             <span class="text-base font-bold text-stone-700 font-mono tabular-nums tracking-tight">約 <span id="filteredTotalTwd">0</span> <span class="text-[10px] font-sans text-stone-500">TWD</span></span>
@@ -476,28 +476,29 @@
           // 💡 分攤人與金額加上粗體強調 (font-bold)
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-gray-700">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-gray-800">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
           
-          // 💡 卡片內縮減為 px-3 py-2
+          // 💡 左右雙欄重構：徹底壓縮卡片高度，消除行高黑洞空白，金額與項目視覺對齊
           htmlOutput += `
-            <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex flex-col gap-1.5 relative hover:shadow-md transition-shadow cursor-pointer" onclick="const d = this.querySelector('.split-detail'); d.classList.toggle('truncate'); d.classList.toggle('whitespace-normal'); d.classList.toggle('break-words');">
-              <div class="flex justify-between items-start pr-8">
-                <div class="flex items-center gap-2">
-                  <h4 class="text-base font-bold text-gray-800">${exp.desc}</h4>
-                </div>
-                <div class="text-sm font-bold text-teal-600 font-mono tabular-nums whitespace-nowrap">${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans">${exp.currency}</span></div>
-              </div>
-              <div class="flex justify-between items-end pr-8 mt-1">
-                <div class="text-[11px] text-gray-500 whitespace-normal break-words leading-relaxed w-full">
-                  <div class="flex justify-between items-center mb-1">
-                    <span><span class="text-gray-700">${payerDisplay}</span> 先付</span>
-                    <span class="text-[10px] text-gray-400 font-mono tabular-nums text-right whitespace-nowrap">約 ${exp.twdAmount.toLocaleString()} TWD</span>
-                  </div>
-                  <div class="text-[11px] text-gray-400 mt-1 split-detail truncate">
-                    ${splitStr}
-                  </div>
+            <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center relative hover:shadow-md transition-shadow cursor-pointer" onclick="const d = this.querySelector('.split-detail'); d.classList.toggle('truncate'); d.classList.toggle('whitespace-normal'); d.classList.toggle('break-words');">
+              
+              <div class="flex-1 min-w-0 pr-2 flex flex-col gap-0.5">
+                <h4 class="text-base font-bold text-teal-800 truncate leading-tight">${exp.desc}</h4>
+                <div class="text-[11px] text-gray-500 leading-tight">${payerDisplay} 先付</div>
+                <div class="text-[11px] text-gray-400 mt-0.5 split-detail truncate leading-tight">
+                  ${splitStr}
                 </div>
               </div>
+              
+              <div class="flex flex-col items-end justify-center shrink-0 pr-6">
+                <div class="text-base font-bold text-teal-600 font-mono tabular-nums leading-tight">
+                  ${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
+                </div>
+                <div class="text-[11px] text-gray-400 font-mono tabular-nums leading-tight mt-0.5">
+                  約 ${exp.twdAmount.toLocaleString()} TWD
+                </div>
+              </div>
+              
               ${!IS_ARCHIVED ?
-              `<button onclick="event.stopPropagation(); promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute top-1/2 -translate-y-1/2 right-1 text-gray-300 hover:text-rose-500 p-2 active:bg-rose-50 rounded-lg transition-colors">🗑️</button>` : ''}
+              `<button onclick="event.stopPropagation(); promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute right-1 top-1/2 -translate-y-1/2 text-gray-300 hover:text-rose-500 p-2 active:bg-rose-50 rounded-lg transition-colors">🗑️</button>` : ''}
             </div>
           `;
         }
