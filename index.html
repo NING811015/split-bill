@@ -473,32 +473,32 @@
           }
 
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
-          // 💡 分攤人與金額加上粗體強調 (font-bold)
-          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-gray-700">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-gray-800">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
+          // 💡 分攤人與金額加上醒目綠色 (text-teal-600)，分隔線改為淡綠色
+          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-teal-600">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-teal-600">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
           
-          // 💡 左右雙欄重構：徹底壓縮卡片高度，金額與項目對齊，強制明細折行完整顯示
+          // 💡 左右雙欄重構，加入 👤、綠色明細、≈ NT$、弱化垃圾桶
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
               
               <div class="flex-1 min-w-0 pr-2 flex flex-col gap-0.5">
                 <h4 class="text-base font-bold text-gray-800 truncate leading-tight">${exp.desc}</h4>
-                <div class="text-[11px] text-gray-500 leading-tight">${payerDisplay} 先付</div>
-                <div class="text-[11px] text-gray-400 mt-0.5 split-detail whitespace-normal break-words leading-tight">
+                <div class="text-[11px] text-gray-500 leading-tight">👤 ${payerDisplay} 先付</div>
+                <div class="text-[11px] mt-0.5 split-detail whitespace-normal break-words leading-tight">
                   ${splitStr}
                 </div>
               </div>
               
-              <div class="flex flex-col items-end shrink-0 pr-6">
+              <div class="flex flex-col items-end shrink-0 pr-5">
                 <div class="text-base font-bold text-teal-600 font-mono tabular-nums leading-tight">
                   ${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
                 </div>
                 <div class="text-[11px] text-gray-400 font-mono tabular-nums leading-tight mt-0.5">
-                  約 ${exp.twdAmount.toLocaleString()} TWD
+                  ≈ NT$ ${exp.twdAmount.toLocaleString()}
                 </div>
               </div>
               
               ${!IS_ARCHIVED ?
-              `<button onclick="event.stopPropagation(); promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute right-1 top-1/2 -translate-y-1/2 text-gray-300 hover:text-rose-500 p-2 active:bg-rose-50 rounded-lg transition-colors">🗑️</button>` : ''}
+              `<button onclick="event.stopPropagation(); promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute right-0 top-1/2 -translate-y-1/2 text-gray-300 hover:text-rose-400 p-1.5 text-[10px] opacity-50 hover:opacity-100 active:bg-rose-50 rounded-lg transition-all">🗑️</button>` : ''}
             </div>
           `;
         }
