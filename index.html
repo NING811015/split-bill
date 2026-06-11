@@ -106,7 +106,7 @@
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3 transform transition-all flex flex-col max-h-[80vh]">
       <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
         <h3 class="text-lg font-bold text-teal-600 flex items-center">🪧 目前結算</h3>
-        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">時間戳:&times;</button>
+        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
       </div>
       <div class="overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
         載入中...
@@ -466,17 +466,15 @@
           }
           renderedCount++;
 
-          // 💡 縮小 Date Header 的 mt-4 到 mt-2 減少空白
           if (exp.date !== currentGroupDate) {
              currentGroupDate = exp.date;
              htmlOutput += `<div class="text-xs font-bold text-gray-500 mt-2 mb-1.5 flex items-center gap-1"><span class="text-base">📅</span> ${currentGroupDate.slice(5)}</div>`;
           }
 
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
-          // 💡 分攤人與金額加上醒目綠色 (text-teal-600)，分隔線改為淡綠色
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-teal-600">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-teal-600">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
           
-          // 💡 左右雙欄重構，加入 👤、綠色明細、≈ NT$、弱化垃圾桶
+          // 💡 右欄改為 self-center 整體垂直置中
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
               
@@ -488,7 +486,7 @@
                 </div>
               </div>
               
-              <div class="flex flex-col items-end shrink-0 pr-5">
+              <div class="flex flex-col items-end shrink-0 pr-5 self-center">
                 <div class="text-base font-bold text-teal-600 font-mono tabular-nums leading-tight">
                   ${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
                 </div>
