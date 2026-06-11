@@ -476,19 +476,19 @@
           // 💡 分攤人與金額加上粗體強調 (font-bold)
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-gray-700">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-gray-800">${v}</span>`).join(' <span class="text-gray-300">|</span> ');
           
-          // 💡 左右雙欄重構：徹底壓縮卡片高度，消除行高黑洞空白，金額與項目視覺對齊
+          // 💡 左右雙欄重構：徹底壓縮卡片高度，金額與項目對齊，強制明細折行完整顯示
           htmlOutput += `
-            <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center relative hover:shadow-md transition-shadow cursor-pointer" onclick="const d = this.querySelector('.split-detail'); d.classList.toggle('truncate'); d.classList.toggle('whitespace-normal'); d.classList.toggle('break-words');">
+            <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
               
               <div class="flex-1 min-w-0 pr-2 flex flex-col gap-0.5">
-                <h4 class="text-base font-bold text-teal-800 truncate leading-tight">${exp.desc}</h4>
+                <h4 class="text-base font-bold text-gray-800 truncate leading-tight">${exp.desc}</h4>
                 <div class="text-[11px] text-gray-500 leading-tight">${payerDisplay} 先付</div>
-                <div class="text-[11px] text-gray-400 mt-0.5 split-detail truncate leading-tight">
+                <div class="text-[11px] text-gray-400 mt-0.5 split-detail whitespace-normal break-words leading-tight">
                   ${splitStr}
                 </div>
               </div>
               
-              <div class="flex flex-col items-end justify-center shrink-0 pr-6">
+              <div class="flex flex-col items-end shrink-0 pr-6">
                 <div class="text-base font-bold text-teal-600 font-mono tabular-nums leading-tight">
                   ${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
                 </div>
