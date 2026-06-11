@@ -377,13 +377,13 @@
     function navigateToTrip(tId) { hapticVibrate(50);
       window.location.href = `https://liff.line.me/${MY_LIFF_ID}?tripId=${tId}`; }
 
-    // 篩選標籤 UI：強制 w-14 overflow-hidden 且不帶省略號
+    // 篩選標籤 UI：強制 w-12 overflow-hidden 且不帶省略號，縮減 px-1 邊距維持文字內寬
     function buildFilterHtml(type, list, selectedArr) {
-      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] w-14 overflow-hidden whitespace-nowrap text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
+      let html = `<button type="button" onclick="toggleFilter('${type}', 'ALL')" class="flex-shrink-0 filter-btn px-1 py-1 border rounded-md text-[11px] w-12 overflow-hidden whitespace-nowrap text-center ${selectedArr.includes('ALL') ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">全部</button>`;
       list.forEach(item => {
         let display = (type==='date') ? item.slice(5) : (uuidToNameMap[item] || item);
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-2 py-1 border rounded-md text-[11px] w-14 overflow-hidden whitespace-nowrap text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
+        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-1 py-1 border rounded-md text-[11px] w-12 overflow-hidden whitespace-nowrap text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
       });
       return html;
     }
