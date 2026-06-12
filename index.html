@@ -106,7 +106,7 @@
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3 transform transition-all flex flex-col max-h-[80vh]">
       
       <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
-        <h3 class="text-lg font-bold text-teal-600 flex items-center">🗿 目前結算</h3>
+        <h3 class="text-lg font-bold text-teal-600 flex items-center">🪧 目前結算</h3>
         <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
       </div>
       
@@ -1027,7 +1027,30 @@
            showToast("結團成功！", "success");
            localStorage.removeItem("nomad_cache_" + currentTripId);
            const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n  歷史紀錄仍可檢視\n  [結算時間：${nowStr}]`}]);
+           const tripName = document.getElementById('tripNameDisplay').innerText.replace(/📦|✈️/g, '').trim().split('\n')[0];
+           const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
+           
+           // 🟢 結團大卡片升級：將純文字替換為高質感的 Flex Message 結構
+           await liff.sendMessages([{
+               type: 'flex', altText: `📦 旅程結團公告｜${tripName}`,
+               contents: {
+                 type: 'bubble', size: 'kilo',
+                 body: {
+                   type: 'box', layout: 'vertical', backgroundColor: '#F3F4F6', // 淡灰色背景營造封存感
+                   contents: [
+                     { type: 'text', text: `📦 旅程已正式結團封存`, weight: 'bold', size: 'md', color: '#1F2937' },
+                     { type: 'text', text: `${tripName}`, size: 'sm', color: '#6B7280', margin: 'sm', weight: 'bold' },
+                     { type: 'text', text: `結算時間：${nowStr}`, size: 'xs', color: '#9CA3AF', margin: 'sm' },
+                     { type: 'text', text: '歷史帳目與結算明細已轉為唯讀模式，不再允許新增或撤銷。', size: 'xs', color: '#6B7280', margin: 'md', wrap: true }
+                   ]
+                 },
+                 footer: { 
+                   type: 'box', layout: 'vertical', 
+                   contents: [{ type: 'button', height: 'sm', color: '#4B5563', style: 'primary', action: { type: 'uri', label: '檢視歷史帳本', uri: tripUrl } }] 
+                 }
+               }
+           }]).catch(e => console.warn("LIFF推播失敗", e));
+           
            setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
