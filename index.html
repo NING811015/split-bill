@@ -104,15 +104,17 @@
 
   <div id="summaryModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3 transform transition-all flex flex-col max-h-[80vh]">
-      <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
-        <h3 class="text-lg font-bold text-teal-600 flex items-center">🪧 目前結算</h3>
-        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
+      <div class="flex justify-between items-start border-b border-gray-100 pb-2 flex-shrink-0">
+        <div class="flex flex-col gap-1">
+          <h3 class="text-lg font-bold text-teal-600 flex items-center leading-none">🪧 目前結算</h3>
+          <div class="text-[10px] text-gray-400 font-mono leading-none" id="summaryTimestamp"></div>
+        </div>
+        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 -mt-0.5 active:scale-90">&times;</button>
       </div>
       <div class="overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
         載入中...
       </div>
       <div class="pt-2 flex-shrink-0 border-t border-gray-50 flex flex-col gap-2">
-        <div class="text-center text-[10px] text-gray-400 font-mono" id="summaryTimestamp"></div>
         <button onclick="closeSummaryModal()" class="w-full bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">關閉</button>
       </div>
     </div>
@@ -270,7 +272,7 @@
           <button onclick="openSummaryModal()" class="text-[12px] border border-green-800 text-green-900 bg-transparent font-bold px-2.5 py-1 rounded-lg active:bg-amber-50/50 transition-colors tracking-widest">目前結算</button>
           <div class="flex items-baseline gap-1">
             <span class="text-[14px] font-bold text-gray-400 uppercase tracking-wider">總計</span>
-            <span class="text-lg font-bold text-stone-700 font-mono tabular-nums tracking-tight"> NT$<span id="filteredTotalTwd">0</span></span>
+            <span class="text-lg font-bold text-stone-700 font-mono tabular-nums tracking-tight">NT$ <span id="filteredTotalTwd">0</span></span>
           </div>
         </div>
       </div>
@@ -305,10 +307,8 @@
     let localAlias = ""; 
     let isSyncComplete = false;
     let LIVE_SUMMARY = "";
-    // UUID 對應字典與失聯帳號清單
     let uuidToNameMap = {};
-    let manualAccounts = [];
-    let brokenLinks = [];
+    
     const hapticVibrate = (pattern) => { 
       try {
         if (navigator.vibrate) navigator.vibrate(pattern);
@@ -474,7 +474,7 @@
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-teal-600">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-teal-600">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
           
-          // 💡 右欄改為 self-center 整體垂直置中
+          // 💡 左右排版優化：左欄付款人置入 mt-0.5 精準對齊間距。右欄金額區改為 self-center 完美垂直置中
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
               
@@ -768,7 +768,7 @@
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`;
         } 
         else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`;
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金額超出`;
+        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金幕超出`;
         }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
@@ -1002,18 +1002,50 @@
     function promptArchiveTrip() { hapticVibrate(50);
       document.getElementById('archiveModal').classList.remove('hidden'); }
     function closeArchiveModal() { document.getElementById('archiveModal').classList.add('hidden'); }
+    
+    // 💡 結團封存重構：將原本粗糙的純文字訊息，全面升格為附帶唯讀跳轉按鈕、頁尾封存時間的精緻 Flex 減噪灰色系卡片
     async function archiveTrip() {
       closeArchiveModal();
       hapticVibrate([50,50]);
       try {
         const payload = { action: "archiveTrip", tripId: currentTripId, userId: currentUserProfile.userId };
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
+        const result = await res.json();
         if (result.status === "success") {
            showToast("結團成功！", "success");
            localStorage.removeItem("nomad_cache_" + currentTripId);
+           
            const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n  歷史紀錄仍可檢視\n  [結算時間：${nowStr}]`}]);
-           setTimeout(() => liff.closeWindow(), 1000);
+           const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
+           
+           await liff.sendMessages([{
+              type: 'flex',
+              altText: `結團封存通知｜${result.tripName || "旅遊帳本"}`,
+              contents: {
+                type: 'bubble',
+                size: 'kilo',
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  backgroundColor: '#F9FAFB',
+                  contents: [
+                    { type: 'text', text: "📦 旅程結團通知", size: 'xs', color: '#6B7280', weight: 'bold' },
+                    { type: 'text', text: `✈️ ${result.tripName || "旅遊帳本"}`, weight: 'bold', size: 'lg', margin: 'sm', color: '#1F2937' },
+                    { type: 'text', text: "此帳本轉為唯讀模式。歷史明細仍可檢視。", size: 'xs', color: '#4B5563', margin: 'md', wrap: true }
+                  ]
+                },
+                footer: {
+                  type: 'box',
+                  layout: 'vertical',
+                  backgroundColor: '#F9FAFB',
+                  contents: [
+                    { type: 'button', height: 'sm', style: 'secondary', action: { type: 'uri', label: '開啟帳本明細', uri: tripUrl } },
+                    { type: 'text', text: `封存時間：${nowStr}`, size: '9px', color: '#9CA3AF', margin: 'md', align: 'center', fontStyle: 'italic' }
+                  ]
+                }
+              }
+           }]);
+           setTimeout(() => liff.closeWindow(), 500);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
     }
@@ -1135,11 +1167,6 @@
             }
             document.getElementById('registrationModal').classList.remove('hidden'); return;
           }
-          
-          if (result.brokenLinks && result.brokenLinks.length > 0) {
-              document.getElementById('brokenLinkAlert').classList.remove('hidden');
-              console.warn("Broken Links Detected:", result.brokenLinks);
-          }
 
           IS_ARCHIVED = (result.tripStatus === 'ARCHIVED');
           IS_DRAFT = (result.tripStatus === 'DRAFT');
@@ -1150,7 +1177,6 @@
           MEMBER_LIST = result.members || []; 
           ALL_EXPENSES = result.expenses || []; 
           localAlias = result.suggestedName || "";
-          
           tripGroupId = result.tripGroupId || null; 
           LIVE_SUMMARY = result.liveSummary || "";
 
