@@ -1238,7 +1238,7 @@
        hapticVibrate(50);
        let displayStr = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
        
-       let cleanStr = displayStr.replace(/\n\s*(NT\$)/g, ' ');
+       let cleanStr = displayStr.replace(/\n\s*(NT\$)/g, ' $1'); 
        cleanStr = cleanStr.replace(/\n\n+/g, '\n');
        
        const lines = cleanStr.split('\n');
