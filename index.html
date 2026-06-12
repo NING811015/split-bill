@@ -104,19 +104,26 @@
 
   <div id="summaryModal" class="absolute inset-0 z-[110] modal-overlay flex flex-col justify-center items-center p-6 hidden">
     <div class="bg-white rounded-2xl p-5 w-full max-w-sm shadow-2xl space-y-3 transform transition-all flex flex-col max-h-[80vh]">
-      <div class="flex justify-between items-start border-b border-gray-100 pb-2 flex-shrink-0">
-        <div class="flex flex-col gap-1">
-          <h3 class="text-lg font-bold text-teal-600 flex items-center leading-none">🪧 目前結算</h3>
-          <div class="text-[10px] text-gray-400 font-mono leading-none" id="summaryTimestamp"></div>
-        </div>
-        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 -mt-0.5 active:scale-90">&times;</button>
+      
+      <div class="flex justify-between items-center border-b border-gray-100 pb-2 flex-shrink-0">
+        <h3 class="text-lg font-bold text-teal-600 flex items-center">🗿 目前結算</h3>
+        <button onclick="closeSummaryModal()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none px-2 active:scale-90">&times;</button>
       </div>
-      <div class="overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed" id="summaryContentDisplay">
+      
+      <div class="overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed hide-scrollbar py-1" id="summaryContentDisplay">
         載入中...
       </div>
-      <div class="pt-2 flex-shrink-0 border-t border-gray-50 flex flex-col gap-2">
+      
+      <div class="flex-shrink-0 flex flex-col pt-1">
+        <div class="border-t border-dashed border-gray-200 w-full my-1.5"></div>
+        
+        <div class="text-center text-[10px] text-gray-400 font-mono tracking-wider" id="summaryTimestamp"></div>
+        
+        <div class="border-t border-dashed border-gray-200 w-full my-1.5 mb-3"></div>
+        
         <button onclick="closeSummaryModal()" class="w-full bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">關閉</button>
       </div>
+      
     </div>
   </div>
 
