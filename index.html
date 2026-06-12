@@ -1238,35 +1238,31 @@
        hapticVibrate(50);
        let displayStr = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
        
-       // 🟢 核心校準：先抹平換行並統一資料格式
-       let cleanStr = displayStr.replace(/\n\s*(NT\$)/g, ' $1');
+       let cleanStr = displayStr.replace(/\n\s*(NT\$)/g, ' ');
        cleanStr = cleanStr.replace(/\n\n+/g, '\n');
        
        const lines = cleanStr.split('\n');
-       let htmlOutput = '<div class="flex flex-col space-y-3 pt-3 pb-1">'; // 💡 space-y-3 完美拉開行距呼吸感
+       let htmlOutput = '<div class="flex flex-col space-y-3 pt-3 pb-1">'; // 💡 透過 space-y-3 掌控乾淨行距
        
        lines.forEach(line => {
          const trimmed = line.trim();
          if (!trimmed) return;
          
-         // 🟢 核心結構化解析：精確拆分名字與金額，實現自動左右強迫齊頭
          const parts = trimmed.split('NT$');
          if (parts.length === 2) {
            const leftText = parts[0].trim();
            const rightText = 'NT$' + parts[1].trim();
            htmlOutput += `
-             <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+             <div class="flex justify-between items-center">
                <span class="text-gray-700 font-medium">${leftText}</span>
                <span class="font-bold text-teal-600 font-mono tabular-nums tracking-tight">${rightText}</span>
              </div>`;
          } else {
-           // 💡 相容處理：若為「🎉 帳目已結清！」等特殊文字，採居中置中顯示
            htmlOutput += `<div class="text-center text-gray-500 font-medium py-2">${trimmed}</div>`;
          }
        });
        htmlOutput += '</div>';
        
-       // 覆寫渲染
        document.getElementById('summaryContentDisplay').innerHTML = htmlOutput;
 
        const d = new Date();
@@ -1275,6 +1271,7 @@
        
        document.getElementById('summaryModal').classList.remove('hidden');
     }
+    
     function closeSummaryModal() {
        document.getElementById('summaryModal').classList.add('hidden');
     }
