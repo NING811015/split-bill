@@ -482,7 +482,7 @@
 
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
           // 🟢 降噪升級：移除全部 font-bold，改用 font-medium 讓排版更輕盈俐落
-          let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-medium text-teal-600">${uuidToNameMap[k] || k} </span><span class="font-mono tabular-nums text-teal-600 ml-0.5">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
+          let splitStr = Object.entries(splitObj).filter(([k,v]) =>Number(v)>0).map(([k,v]) => `<span class="font-medium text-teal-600">${uuidToNameMap[k] || k} </span><span class="font-mono tabular-nums text-teal-600 ml-0.5">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
           
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
