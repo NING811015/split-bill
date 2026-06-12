@@ -272,7 +272,7 @@
           <button onclick="openSummaryModal()" class="text-[12px] border border-green-800 text-green-900 bg-transparent font-bold px-2.5 py-1 rounded-lg active:bg-amber-50/50 transition-colors tracking-widest">目前結算</button>
           <div class="flex items-baseline gap-1">
             <span class="text-[14px] font-bold text-gray-400 uppercase tracking-wider">總計</span>
-            <span class="text-lg font-bold text-stone-700 font-mono tabular-nums tracking-tight">NT$ <span id="filteredTotalTwd">0</span></span>
+            <span class="text-lg font-bold text-stone-700 font-mono tabular-nums tracking-tight"> NT$<span id="filteredTotalTwd">0</span></span>
           </div>
         </div>
       </div>
@@ -307,8 +307,10 @@
     let localAlias = ""; 
     let isSyncComplete = false;
     let LIVE_SUMMARY = "";
+    // UUID 對應字典與失聯帳號清單
     let uuidToNameMap = {};
-    
+    let manualAccounts = [];
+    let brokenLinks = [];
     const hapticVibrate = (pattern) => { 
       try {
         if (navigator.vibrate) navigator.vibrate(pattern);
@@ -474,7 +476,6 @@
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
           let splitStr = Object.entries(splitObj).filter(([k,v]) => Number(v)>0).map(([k,v]) => `<span class="font-bold text-teal-600">${uuidToNameMap[k] || k}:</span><span class="font-bold font-mono tabular-nums text-teal-600">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
           
-          // 💡 左右排版優化：左欄付款人置入 mt-0.5 精準對齊間距。右欄金額區改為 self-center 完美垂直置中
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
               
@@ -768,7 +769,7 @@
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`;
         } 
         else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`;
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金幕超出`;
+        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金額超出`;
         }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
@@ -1002,50 +1003,18 @@
     function promptArchiveTrip() { hapticVibrate(50);
       document.getElementById('archiveModal').classList.remove('hidden'); }
     function closeArchiveModal() { document.getElementById('archiveModal').classList.add('hidden'); }
-    
-    // 💡 結團封存重構：將原本粗糙的純文字訊息，全面升格為附帶唯讀跳轉按鈕、頁尾封存時間的精緻 Flex 減噪灰色系卡片
     async function archiveTrip() {
       closeArchiveModal();
       hapticVibrate([50,50]);
       try {
         const payload = { action: "archiveTrip", tripId: currentTripId, userId: currentUserProfile.userId };
-        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); 
-        const result = await res.json();
+        const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
            showToast("結團成功！", "success");
            localStorage.removeItem("nomad_cache_" + currentTripId);
-           
            const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-           const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
-           
-           await liff.sendMessages([{
-              type: 'flex',
-              altText: `結團封存通知｜${result.tripName || "旅遊帳本"}`,
-              contents: {
-                type: 'bubble',
-                size: 'kilo',
-                body: {
-                  type: 'box',
-                  layout: 'vertical',
-                  backgroundColor: '#F9FAFB',
-                  contents: [
-                    { type: 'text', text: "📦 旅程結團通知", size: 'xs', color: '#6B7280', weight: 'bold' },
-                    { type: 'text', text: `✈️ ${result.tripName || "旅遊帳本"}`, weight: 'bold', size: 'lg', margin: 'sm', color: '#1F2937' },
-                    { type: 'text', text: "此帳本轉為唯讀模式。歷史明細仍可檢視。", size: 'xs', color: '#4B5563', margin: 'md', wrap: true }
-                  ]
-                },
-                footer: {
-                  type: 'box',
-                  layout: 'vertical',
-                  backgroundColor: '#F9FAFB',
-                  contents: [
-                    { type: 'button', height: 'sm', style: 'secondary', action: { type: 'uri', label: '開啟帳本明細', uri: tripUrl } },
-                    { type: 'text', text: `封存時間：${nowStr}`, size: '9px', color: '#9CA3AF', margin: 'md', align: 'center', fontStyle: 'italic' }
-                  ]
-                }
-              }
-           }]);
-           setTimeout(() => liff.closeWindow(), 500);
+           await liff.sendMessages([{ type: 'text', text: `📦 旅程已正式結團封存！\n  歷史紀錄仍可檢視\n  [結算時間：${nowStr}]`}]);
+           setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
       } catch(e) { showToast("結團失敗", "error"); }
     }
@@ -1167,6 +1136,11 @@
             }
             document.getElementById('registrationModal').classList.remove('hidden'); return;
           }
+          
+          if (result.brokenLinks && result.brokenLinks.length > 0) {
+              document.getElementById('brokenLinkAlert').classList.remove('hidden');
+              console.warn("Broken Links Detected:", result.brokenLinks);
+          }
 
           IS_ARCHIVED = (result.tripStatus === 'ARCHIVED');
           IS_DRAFT = (result.tripStatus === 'DRAFT');
@@ -1177,6 +1151,7 @@
           MEMBER_LIST = result.members || []; 
           ALL_EXPENSES = result.expenses || []; 
           localAlias = result.suggestedName || "";
+          
           tripGroupId = result.tripGroupId || null; 
           LIVE_SUMMARY = result.liveSummary || "";
 
@@ -1281,4 +1256,6 @@
     initializeLiff();
   </script>
 </body>
-</html>
+</html>"""
+}
+}
