@@ -263,15 +263,15 @@
       <div class="bg-white shadow-sm z-10 flex-shrink-0 pt-2 pb-0 relative">
         <div class="space-y-2 px-3 pb-1">
           <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">📅 日期</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0 whitespace-nowrap">📅 日期</span>
             <div id="dateFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">💳 付款</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0 whitespace-nowrap">💳 付款</span>
             <div id="payerFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0">🛍️ 分攤</span>
+            <span class="text-[10px] font-bold text-gray-400 uppercase w-10 flex-shrink-0 whitespace-nowrap">🛍️ 分攤</span>
             <div id="splitterFilters" class="flex gap-1.5 overflow-x-auto hide-scrollbar flex-grow"></div>
           </div>
         </div>
@@ -952,7 +952,13 @@
           
           const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
-          setTimeout(() => liff.closeWindow(), 500);
+          
+          // 🟢 方案 A 升級：移除關閉視窗，原地清空內容以支援連續批次輸入
+          document.getElementById('descInput').value = '';   // 清空消費項目
+          document.getElementById('amountInput').value = ''; // 清空總金額
+          
+          renderSplitDetailAdd(); // 重新初始化分帳面板（清空自訂拆分金額或份數）
+          calculateLivePreview(); // 重新觸發預覽計算（會因為金額為 0 自動將按鈕鎖定回「🔒 請輸入有效金額」）
         } else throw new Error();
       } catch (err) { showToast("網絡通訊錯誤，請重試", "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "💾 儲存並同步至群組";
       }
