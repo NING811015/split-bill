@@ -1237,8 +1237,12 @@
     function openSummaryModal() {
        hapticVibrate(50);
        let displayStr = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
-       displayStr = displayStr.replace(/\n\s*(NT\$)/g, '  $1');
-       document.getElementById('summaryContentDisplay').innerText = displayStr;
+       displayStr = displayStr.replace(/\n\s*(NT\$)/g, '  $1'); // 抹平金額折行
+       displayStr = displayStr.replace(/\n\n/g, '\n');         // ➕ 新增：把人與人之間的雙換行壓縮成單換行！
+       
+       const contentDisplay = document.getElementById('summaryContentDisplay');
+       contentDisplay.innerText = displayStr;
+       contentDisplay.className = "overflow-y-auto flex-grow text-sm text-gray-700 font-mono tracking-tight whitespace-pre-line leading-relaxed hide-scrollbar pt-4 pb-2"; // 💡 同步優化：pt-4 增加頂部舒適留白
        
        const d = new Date();
        const nowStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
