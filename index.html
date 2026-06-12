@@ -411,7 +411,7 @@
       list.forEach(item => {
         let display = (type==='date') ? item.slice(5) : (uuidToNameMap[item] || item);
         let isActive = selectedArr.includes(item);
-        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-1.5 py-1 border rounded-md text-[11px] w-12 overflow-hidden whitespace-nowrap text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
+        html += `<button type="button" onclick="toggleFilter('${type}', '${item}')" class="flex-shrink-0 filter-btn px-1.5 py-1 border rounded-md text-[11px] w-14 overflow-hidden whitespace-nowrap text-center ${isActive ? 'active bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500'}">${display}</button>`;
       });
       return html;
     }
