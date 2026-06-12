@@ -242,9 +242,9 @@
         <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
           <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
           <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
-            <button type="button" class="split-mode-btn active" data-mode="EQUAL">⚖️平均</button>
+            <button type="button" class="split-mode-btn active" data-mode="EQUAL">👥平均</button>
             <button type="button" class="split-mode-btn" data-mode="EXACT">🎯拆分</button>
-            <button type="button" class="split-mode-btn" data-mode="SHARE">👥份數</button>
+            <button type="button" class="split-mode-btn" data-mode="SHARE">⚖️份數</button>
             <button type="button" class="split-mode-btn" data-mode="PERCENT">📈比例</button>
           </div>
           <input type="hidden" id="splitModeSelect" value="EQUAL">
@@ -526,6 +526,7 @@
     function closeDeleteModal() { pendingDeleteId = null;
       pendingTripId = null; document.getElementById('deleteModal').classList.add('hidden'); }
     async function executeDelete() {
+      if (IS_ARCHIVED) { closeDeleteModal(); return showToast("已封存旅程無法撤銷帳目", "error"); }
       if(!pendingDeleteId) return;
       hapticVibrate(50);
       const btn = document.getElementById('confirmDeleteBtn');
@@ -585,6 +586,7 @@
        document.getElementById('evictModal').classList.add('hidden');
     }
     async function executeRemoveMember() {
+       if (IS_ARCHIVED) { closeEvictModal(); return showToast("已封存旅程無法移除團員", "error"); }
        if(!pendingRemoveId) return;
        hapticVibrate(50);
        const btn = document.getElementById('confirmEvictBtn');
@@ -611,6 +613,7 @@
        document.getElementById('manualMemberModal').classList.add('hidden');
     }
     function submitManualMember() {
+       if (IS_ARCHIVED) { closeManualModal(); return showToast("已封存旅程無法新增團員", "error"); }
        const name = document.getElementById('manualNameInput').value.trim();
        if (!name) return showToast("請輸入暱稱", "error");
        
@@ -1060,6 +1063,7 @@
     }
 
     async function submitRegistration() {
+      if (IS_ARCHIVED) return showToast("本旅程已結團封存，無法註冊", "error");
       const claimSelect = document.getElementById('claimTargetSelect');
       const claimId = claimSelect && !claimSelect.classList.contains('hidden') ? claimSelect.value : null;
       const nickname = document.getElementById('realNameInput').value.trim();
@@ -1155,6 +1159,10 @@
 
         if (result.status === "success") {
           if (!result.isRegistered && result.tripStatus !== 'DRAFT') { 
+            if (result.tripStatus === 'ARCHIVED') {
+                throwFatalError("無法加入", "本旅程已結團封存，停止開放新成員加入。");
+                return;
+            }
             if (result.manualAccounts && result.manualAccounts.length > 0) {
               const claimSelect = document.getElementById('claimTargetSelect');
               claimSelect.classList.remove('hidden');
