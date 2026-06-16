@@ -28,6 +28,8 @@
     .split-mode-btn:active { transform:scale(.97);}
     details > summary { list-style: none; }
     details > summary::-webkit-details-marker { display: none; }
+    /* 隱藏 datetime-local 預設的日曆圖標 (限 webkit 核心) */
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
   </style>
 </head>
 <body class="text-gray-800 font-sans relative">
@@ -156,7 +158,7 @@
     <div class="p-4 flex flex-col h-full overflow-y-auto bg-gray-50" id="view-settings" style="display: none;">
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div>
-          <label class="block text-xs font-bold text-gray-500 mb-1">🧳旅程名稱</label>
+          <label class="block text-xs font-bold text-gray-500 mb-1">📍旅程名稱</label>
           <input type="text" id="setTripName" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例: 南非挖礦團">
         </div>
         <div class="grid grid-cols-2 gap-3">
@@ -221,10 +223,19 @@
               <label class="block text-xs font-medium text-gray-500 mb-1">付款人</label>
               <select id="payerSelect" class="w-full bg-teal-50 border border-teal-100 rounded-lg h-10 px-2 focus:outline-none text-teal-700 font-bold text-sm truncate shadow-inner"></select>
             </div>
-            <div class="w-[60%]">
+            
+            <div class="w-[60%] relative">
               <label class="block text-xs font-medium text-gray-500 mb-1">消費項目</label>
-              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
+              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 pl-3 pr-20 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
+              
+              <div class="absolute right-0 bottom-0 h-10 flex items-center pr-1">
+                 <div id="timeStatusBadge" class="flex items-center gap-1 bg-gray-100/80 text-gray-400 px-2 py-1 rounded-md text-[10px] font-mono tracking-tight transition-all duration-200 pointer-events-none">
+                    <span class="text-[12px]">🕒</span> <span id="timeStatusText" class="hidden"></span>
+                 </div>
+                 <input type="datetime-local" id="consumeTimeInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+              </div>
             </div>
+            
           </div>
           <div class="flex space-x-3">
             <div class="w-[40%]">
@@ -242,9 +253,9 @@
         <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
           <label class="block text-xs font-medium text-gray-500 mb-2">分帳模式</label>
           <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
-            <button type="button" class="split-mode-btn active" data-mode="EQUAL">⚖️平均</button>
+            <button type="button" class="split-mode-btn active" data-mode="EQUAL">👥平均</button>
             <button type="button" class="split-mode-btn" data-mode="EXACT">🎯拆分</button>
-            <button type="button" class="split-mode-btn" data-mode="SHARE">👥份數</button>
+            <button type="button" class="split-mode-btn" data-mode="SHARE">⚖️份數</button>
             <button type="button" class="split-mode-btn" data-mode="PERCENT">📈比例</button>
           </div>
           <input type="hidden" id="splitModeSelect" value="EQUAL">
@@ -343,7 +354,7 @@
     let restoreMainAreaTimeout;
     
     document.addEventListener('focusin', (e) => { 
-      if (e.target.tagName === 'INPUT') { 
+      if (e.target.tagName === 'INPUT' && e.target.type !== 'datetime-local') { 
         clearTimeout(restoreMainAreaTimeout);
         if (currentTab === 'add') {
           bottomBar.classList.add('btn-hidden'); appContainer.style.height = '100%'; 
@@ -367,6 +378,43 @@
         } 
       }, 150);
     });
+    
+    // 🟢 重置並更新膠囊標籤 UI
+    function resetConsumeTime() {
+       const tzOffset = (new Date()).getTimezoneOffset() * 60000;
+       const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 16);
+       const timeInput = document.getElementById('consumeTimeInput');
+       timeInput.value = localISOTime;
+       timeInput.setAttribute('data-default', localISOTime); // 記錄基準時間以供比對
+       
+       document.getElementById('timeStatusBadge').className = "flex items-center gap-1 bg-gray-100 text-gray-400 px-2 py-1 rounded-md text-[10px] font-mono tracking-tight transition-all duration-200 pointer-events-none";
+       document.getElementById('timeStatusText').classList.add('hidden');
+    }
+
+    // 🟢 監聽時間選擇器變更 (動態展開膠囊)
+    document.getElementById('consumeTimeInput').addEventListener('change', function(e) {
+       const badge = document.getElementById('timeStatusBadge');
+       const textSpan = document.getElementById('timeStatusText');
+       
+       if (e.target.value !== e.target.getAttribute('data-default')) {
+           // 若非預設時間，展開成橘色警示標籤
+           const dateObj = new Date(e.target.value);
+           const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+           const d = String(dateObj.getDate()).padStart(2, '0');
+           const hh = String(dateObj.getHours()).padStart(2, '0');
+           const mm = String(dateObj.getMinutes()).padStart(2, '0');
+           
+           textSpan.innerText = `${m}/${d} ${hh}:${mm}`;
+           textSpan.classList.remove('hidden');
+           badge.className = "flex items-center gap-1 bg-orange-100 text-orange-700 border border-orange-200 shadow-sm px-2 py-1 rounded-md text-[10px] font-mono font-bold tracking-tight transition-all duration-200 pointer-events-none z-10 relative";
+           hapticVibrate(20);
+       } else {
+           // 若改回預設，縮回隱藏狀態
+           badge.className = "flex items-center gap-1 bg-gray-100 text-gray-400 px-2 py-1 rounded-md text-[10px] font-mono tracking-tight transition-all duration-200 pointer-events-none";
+           textSpan.classList.add('hidden');
+       }
+    });
+
     function throwFatalError(title, desc) {
       document.getElementById('errorModalTitle').innerText = title;
       document.getElementById('errorModalDesc').innerText = desc;
@@ -393,7 +441,9 @@
           bottomBar.classList.remove('btn-hidden');
           appContainer.style.height = 'calc(100% - 76px)'; 
           const btn = document.getElementById('submitBtn');
-          if (tab === 'add') { calculateLivePreview();
+          if (tab === 'add') { 
+              resetConsumeTime(); // 🟢 切換到新增頁面時，強制重置為最新當下時間
+              calculateLivePreview();
           }
           else if (tab === 'settings') {
             btn.disabled = IS_ARCHIVED;
@@ -483,11 +533,14 @@
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
           let splitStr = Object.entries(splitObj).filter(([k,v]) =>Number(v)>0).map(([k,v]) => `<span class="font-medium text-teal-600">${uuidToNameMap[k] || k} </span><span class="font-mono tabular-nums text-teal-600 ml-0.5">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
           
+          // 🟢 在明細卡片標題旁邊顯示提取出的時分秒 (若無則隱藏)
+          let timeDisplayHtml = exp.time ? `<span class="ml-1.5 text-[10px] text-gray-400 font-mono font-normal tracking-tighter bg-gray-50 px-1 rounded border border-gray-100">${exp.time}</span>` : '';
+
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
               
               <div class="flex-1 min-w-0 pr-2 flex flex-col gap-0.5">
-                <h4 class="text-base font-bold text-gray-800 truncate leading-tight">${exp.desc}</h4>
+                <h4 class="text-base font-bold text-gray-800 truncate leading-tight flex items-center">${exp.desc} ${timeDisplayHtml}</h4>
                 <div class="text-[11px] text-gray-500 leading-tight mt-0.5">👤 ${payerDisplay} 付</div>
                 <div class="text-[11px] mt-0.5 split-detail whitespace-normal break-words leading-tight">
                   ${splitStr}
@@ -896,9 +949,16 @@
       }
 
       hapticVibrate(50);
-      const btn = document.getElementById('submitBtn'); const desc = document.getElementById('descInput').value.trim(); const currency = document.getElementById('currencySelect').value;
+      const btn = document.getElementById('submitBtn'); 
+      const desc = document.getElementById('descInput').value.trim(); 
+      const currency = document.getElementById('currencySelect').value;
       const selectedPayerId = document.getElementById('payerSelect').value;
       const selectedPayerName = document.getElementById('payerSelect').options[document.getElementById('payerSelect').selectedIndex].text;
+      
+      // 🟢 抓取自訂日期時間字串 (例如：2026-06-15T14:30)
+      let rawConsumeTime = document.getElementById('consumeTimeInput').value;
+      // 將 "T" 替換為空格，格式化為 "YYYY-MM-DD HH:mm" 供後端純文字存入
+      const formattedConsumeTime = rawConsumeTime.replace('T', ' ');
       
       const totalTwd = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE));
       let splitDetailObj = {}; 
@@ -941,7 +1001,13 @@
 
       btn.disabled = true; btn.innerText = "⏳ 儲存交易中...";
       try {
-        const payload = { action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: selectedPayerId, description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, splitDetailString: JSON.stringify(splitDetailObj), displaySplitLocalString: JSON.stringify(displaySplitLocalObj) };
+        // 🟢 payload 中加入 customDateTime 參數
+        const payload = { 
+            action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: selectedPayerId, 
+            description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, 
+            splitDetailString: JSON.stringify(splitDetailObj), displaySplitLocalString: JSON.stringify(displaySplitLocalObj),
+            customDateTime: formattedConsumeTime
+        };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("儲存成功！", "success");
@@ -966,7 +1032,8 @@
           document.getElementById('amountInput').value = ''; 
           
           renderSplitDetailAdd(); 
-          calculateLivePreview(); 
+          calculateLivePreview();
+          resetConsumeTime(); // 🟢 儲存成功後，強制重置時間回當下
         } else throw new Error();
       } catch (err) { showToast("網絡通訊錯誤，請重試", "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "💾 儲存並同步至群組";
       }
@@ -1341,4 +1408,12 @@
     initializeLiff();
   </script>
 </body>
-</html>
+</html>"""
+
+# We'll just confirm there's no glaring syntax error in the JS
+import js2py
+try:
+    js2py.parse_js(script_content)
+    print("JS parsed successfully.")
+except Exception as e:
+    print(f"JS parsing error: {e}")}}
