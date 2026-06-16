@@ -492,7 +492,7 @@
     function renderHistory() {
       const container = document.getElementById('historyListContainer');
       let totalTwdSum = 0; let htmlOutput = ""; let renderedCount = 0;
-      let sorted = [...ALL_EXPENSES].sort((a, b) => new Date(b.date) - new Date(a.date));
+      let sorted = [...ALL_EXPENSES].sort((a, b) => (b.sortTime || new Date(b.date).getTime()) - (a.sortTime || new Date(a.date).getTime()));
       let currentGroupDate = '';
 
       sorted.forEach(exp => {
