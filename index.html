@@ -226,14 +226,15 @@
             <div class="w-[60%]">
               <div class="flex justify-between items-center mb-1">
                 <label class="text-xs font-medium text-gray-500">消費項目</label>
-                <div class="relative flex items-center">
-                   <div id="timeStatusBadge" class="flex items-center gap-1 text-gray-400 px-2 py-0.5 rounded text-[11px] font-mono tracking-tight transition-all duration-200 pointer-events-none">
-                      <span class="text-[12px]">🕒</span> <span id="timeStatusText" class="hidden"></span>
-                   </div>
+                <span id="timeStatusText" class="text-[11px] font-medium text-gray-500 tracking-tight hidden"></span>
+              </div>
+              <div class="relative flex items-center">
+                <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 pl-3 pr-10 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
+                <div class="absolute right-0 h-full flex items-center pr-3">
+                   <span class="text-[14px] text-gray-400 pointer-events-none">🕒</span>
                    <input type="datetime-local" id="consumeTimeInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                 </div>
               </div>
-              <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
             </div>
             
           </div>
@@ -325,6 +326,7 @@
     let localAlias = ""; 
     let isSyncComplete = false;
     let LIVE_SUMMARY = "";
+    // UUID 對應字典與失聯帳號清單
     let uuidToNameMap = {};
     let manualAccounts = [];
     let brokenLinks = [];
@@ -378,6 +380,7 @@
       }, 150);
     });
     
+    // 🟢 重置並隱藏上方標籤
     function resetConsumeTime() {
        const tzOffset = (new Date()).getTimezoneOffset() * 60000;
        const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 16);
@@ -385,13 +388,18 @@
        timeInput.value = localISOTime;
        timeInput.setAttribute('data-default', localISOTime); 
        
-       document.getElementById('timeStatusBadge').className = "flex items-center gap-1 text-gray-400 px-2 py-0.5 rounded text-[11px] font-mono tracking-tight transition-all duration-200 pointer-events-none";
        document.getElementById('timeStatusText').classList.add('hidden');
     }
 
+    // 🟢 監聽時間變更 (若空值或預設值則隱藏，否則顯示於 Label 右側)
     document.getElementById('consumeTimeInput').addEventListener('change', function(e) {
-       const badge = document.getElementById('timeStatusBadge');
        const textSpan = document.getElementById('timeStatusText');
+       
+       // 空值斷路防禦：若在系統轉盤點擊清除，強制重新抓取當下時間並縮回
+       if (!e.target.value) {
+           resetConsumeTime();
+           return;
+       }
        
        if (e.target.value !== e.target.getAttribute('data-default')) {
            const dateObj = new Date(e.target.value);
@@ -402,10 +410,8 @@
            
            textSpan.innerText = `${m}/${d} ${hh}:${mm}`;
            textSpan.classList.remove('hidden');
-           badge.className = "flex items-center gap-1 text-gray-700 px-2 py-0.5 rounded text-[11px] font-mono font-bold tracking-tight transition-all duration-200 pointer-events-none z-10 relative";
            hapticVibrate(20);
        } else {
-           badge.className = "flex items-center gap-1 text-gray-400 px-2 py-0.5 rounded text-[11px] font-mono tracking-tight transition-all duration-200 pointer-events-none";
            textSpan.classList.add('hidden');
        }
     });
@@ -531,6 +537,7 @@
 
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
+              
               <div class="flex-1 min-w-0 pr-2 flex flex-col gap-0.5">
                 <h4 class="text-base font-bold text-gray-800 truncate leading-tight flex items-center">${exp.desc} ${timeDisplayHtml}</h4>
                 <div class="text-[11px] text-gray-500 leading-tight mt-0.5">👤 ${payerDisplay} 付</div>
@@ -538,6 +545,7 @@
                   ${splitStr}
                 </div>
               </div>
+              
               <div class="flex flex-col items-end shrink-0 pr-5 self-center">
                 <div class="text-base font-bold text-teal-600 font-mono tabular-nums leading-tight">
                   ${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
@@ -546,6 +554,7 @@
                   ≈ NT$ ${exp.twdAmount.toLocaleString()}
                 </div>
               </div>
+              
               ${!IS_ARCHIVED ?
               `<button onclick="event.stopPropagation(); promptDelete('${exp.id}', '${exp.date}', '${exp.desc}', ${exp.rawAmount}, '${exp.currency}', '${exp.tripId}')" class="absolute right-0 top-1/2 -translate-y-1/2 text-gray-300 hover:text-rose-400 p-1.5 text-[10px] opacity-50 hover:opacity-100 active:bg-rose-50 rounded-lg transition-all">🗑️</button>` : ''}
             </div>
@@ -1395,12 +1404,4 @@
     initializeLiff();
   </script>
 </body>
-</html>"""
-
-# We'll just confirm there's no glaring syntax error in the JS
-import js2py
-try:
-    js2py.parse_js(script_content)
-    print("JS parsed successfully.")
-except Exception as e:
-    print(f"JS parsing error: {e}")}
+</html>
