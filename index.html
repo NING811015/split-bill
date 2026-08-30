@@ -52,7 +52,7 @@
       <select id="claimTargetSelect" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg mb-2 hidden">
          <option value="">🌟 建立新帳號</option>
       </select>
-      <input type="text" id="realNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
+      <input type="text" id="realNameInput" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
       <button id="registerBtn" onclick="submitRegistration()" class="w-full bg-teal-600 text-white font-bold rounded-xl py-3 active:bg-teal-700 shadow-md transition-transform active:scale-[0.98]">完成註冊並進入</button>
     </div>
   </div>
@@ -62,7 +62,7 @@
       <div class="text-4xl">🧸</div>
       <h2 class="text-xl font-bold text-gray-800">新增手動旅伴</h2>
       <p class="text-sm text-gray-500">請輸入旅伴暱稱 (勿與現有成員重名)</p>
-      <input type="text" id="manualNameInput" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
+      <input type="text" id="manualNameInput" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="5" placeholder="請輸入暱稱" class="w-full bg-gray-50 border border-gray-100 rounded-lg p-3 text-center text-lg focus:outline-none focus:ring-2 focus:ring-teal-500 shadow-inner">
       <div class="flex space-x-3 pt-2">
         <button onclick="closeManualModal()" class="w-1/2 bg-gray-100 text-gray-700 font-bold rounded-xl py-2.5 active:bg-gray-200 transition-colors">取消</button>
         <button onclick="submitManualMember()" class="w-1/2 bg-teal-600 text-white font-bold rounded-xl py-2.5 shadow-md active:bg-teal-700 transition-transform active:scale-[0.98]">確定新增</button>
@@ -158,7 +158,7 @@
       <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 space-y-4">
         <div>
           <label class="block text-xs font-bold text-gray-500 mb-1">📍旅程名稱</label>
-          <input type="text" id="setTripName" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例: 南非挖礦團">
+          <input type="text" id="setTripName" autocomplete="off" autocorrect="off" spellcheck="false" class="w-full bg-gray-50 rounded-lg p-2.5 text-sm border border-gray-200" placeholder="例: 南非挖礦團">
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -184,9 +184,9 @@
         <div id="newRateArea" class="hidden bg-rose-50 border border-rose-100 p-3 rounded-lg">
            <label class="block text-xs font-bold text-rose-800 mb-2">➕ 新增自訂幣別與匯率</label>
            <div class="flex items-center gap-2">
-             <input type="text" id="setNewCurCode" maxlength="3" class="w-16 bg-white rounded-lg p-1.5 text-sm font-mono border border-rose-200 text-center uppercase" placeholder="代碼">
+             <input type="text" id="setNewCurCode" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="3" class="w-16 bg-white rounded-lg p-1.5 text-sm font-mono border border-rose-200 text-center uppercase" placeholder="代碼">
              <span class="text-sm font-mono text-rose-700 shrink-0">=</span>
-             <input type="text" id="setNewRate" inputmode="decimal" class="flex-1 min-w-0 bg-white rounded-lg p-1.5 text-sm font-mono border border-rose-200 text-right" placeholder="例如：35.2">
+             <input type="text" id="setNewRate" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="decimal" class="flex-1 min-w-0 bg-white rounded-lg p-1.5 text-sm font-mono border border-rose-200 text-right" placeholder="例如：35.2">
              <span class="text-sm font-mono text-rose-700 shrink-0">TWD</span>
              <button type="button" onclick="confirmNewCurrency()" class="bg-rose-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold active:bg-rose-600">確認</button>
            </div>
@@ -229,7 +229,7 @@
                 <span id="timeStatusText" class="text-[11px] font-medium text-gray-500 tracking-tight hidden"></span>
               </div>
               <div class="relative flex items-center">
-                <input type="text" id="descInput" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 pl-3 pr-10 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
+                <input type="text" id="descInput" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 pl-3 pr-10 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
                 <div class="absolute right-0 h-full flex items-center pr-3">
                    <span class="text-[14px] text-gray-400 pointer-events-none">🕒</span>
                    <input type="datetime-local" id="consumeTimeInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -246,8 +246,11 @@
               <select id="currencySelect" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white text-gray-700 font-bold text-sm shadow-inner"></select>
             </div>
             <div class="w-[60%]">
-              <label class="block text-xs font-medium text-gray-500 mb-1">總金額</label>
-              <input type="text" id="amountInput" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-teal-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-right shadow-inner transition-all">
+              <div class="flex justify-between items-baseline mb-1">
+                <label class="block text-xs font-medium text-gray-500">總金額</label>
+                <span id="twdPreviewText" class="text-[10px] text-teal-500 font-bold hidden font-mono tracking-tight"></span>
+              </div>
+              <input type="text" id="amountInput" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="decimal" placeholder="0" class="live-trigger font-mono tabular-nums tracking-tight w-full text-xl font-bold text-teal-600 bg-gray-50 border border-gray-100 rounded-lg h-10 px-3 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-right shadow-inner transition-all">
             </div>
           </div>
         </div>
@@ -785,14 +788,14 @@
           inputHtml = `<div class="flex items-center space-x-3"><span class="live-result text-xs font-bold text-teal-500 w-16 text-right font-mono tabular-nums tracking-tight"></span><input type="checkbox" data-id="${id}" class="split-checkbox w-5 h-5 rounded border-gray-300 pointer-events-none" style="accent-color:#14B8A6;" ${backup.checked ? 'checked' : ''}></div>`; 
         } 
         else if (mode === "EXACT") { 
-          inputHtml = `<div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`;
+          inputHtml = `<div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" value="${backup.value}" placeholder="0" class="split-input live-trigger w-20 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1 w-6">${currency}</span></div>`;
         } 
         else if (mode === "SHARE") { 
           let shareVal = backup.value || "1";
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" value="${shareVal}" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`;
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" value="${shareVal}" class="split-input live-trigger w-12 text-center bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">份</span></div></div>`;
         } 
         else if (mode === "PERCENT") { 
-          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" value="${backup.value}" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`;
+          inputHtml = `<div class="flex items-center space-x-2"><span class="live-result text-xs font-bold text-teal-500 w-14 text-right font-mono tabular-nums tracking-tight"></span><div class="flex items-center"><input type="text" data-id="${id}" inputmode="decimal" autocomplete="off" autocorrect="off" spellcheck="false" value="${backup.value}" placeholder="0" class="split-input live-trigger w-12 text-right bg-gray-50 border border-gray-200 rounded h-7 px-2 text-sm focus:outline-none focus:bg-white focus:border-teal-400 font-mono tabular-nums transition-colors"><span class="text-[10px] text-gray-400 ml-1">%</span></div></div>`;
         }
         row.innerHTML = `<span class="text-sm font-medium text-gray-700 pointer-events-none truncate w-24">${name}</span>${inputHtml}`; container.appendChild(row);
       });
@@ -804,15 +807,21 @@
       const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const multiplier = ['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'PHP', 'CLP', 'COP'].includes(currency.toUpperCase()) ? 1 : 100;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
+      const twdPreview = document.getElementById('twdPreviewText');
       btn.disabled = false; 
       
       if (rawAmount <= 0) { 
         statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`;
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
         btn.innerText = "🔒 請輸入有效金額";
+        twdPreview.classList.add('hidden');
         Array.from(rows).forEach(row => { const res = row.querySelector('.live-result'); if(res) res.innerText = ""; }); 
         return;
       }
+      
+      let currentTwdEst = Math.round(rawAmount * CURRENT_RATE * (1 + GLOBAL_FEE_RATE));
+      twdPreview.innerText = `≈ NT$ ${currentTwdEst.toLocaleString()}`;
+      twdPreview.classList.remove('hidden');
 
       if(!isSyncComplete) {
          statusBar.innerHTML = `<span class="text-teal-600 animate-pulse">⏳ 正在與資料庫安全校準...</span>`;
