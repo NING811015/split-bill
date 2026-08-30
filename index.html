@@ -991,6 +991,7 @@
       hapticVibrate(50);
       const btn = document.getElementById('submitBtn'); 
       const desc = document.getElementById('descInput').value.trim(); 
+      if (!desc) return showToast("請輸入消費項目", "error");
       const selectedPayerId = document.getElementById('payerSelect').value;
       const selectedPayerName = document.getElementById('payerSelect').options[document.getElementById('payerSelect').selectedIndex].text;
       
@@ -1077,7 +1078,7 @@
           });
           const detailText = detailArr.join(" | ");
           
-          const notifyMsg = `📝 ${desc || "未命名消費"}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
+         const notifyMsg = `📝 ${desc}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
           
           document.getElementById('descInput').value = '';   
