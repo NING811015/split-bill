@@ -604,7 +604,7 @@
       hapticVibrate([50, 50]);
       pendingDeleteId = id;
       pendingTripId = tripId;
-      document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${amount.toLocaleString()} ${currency}`;
+      document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${currency} ${amount.toLocaleString()}`;
       document.getElementById('deleteModal').classList.remove('hidden'); 
     }
     function closeDeleteModal() { pendingDeleteId = null;
@@ -1163,9 +1163,12 @@
 
       btn.disabled = true; btn.innerText = "⏳ 儲存交易中...";
       try {
+        // 🟢 針對 Google Sheets 強制轉型問題進行防禦（若開頭為數字或計算符號，補上單引號）
+        const dbDesc = /^[\d=+\-@#]/.test(desc) ? "'" + desc : desc;
+
         const payload = { 
             action: "addExpense", tripId: currentTripId, groupId: currentGroupId, payerUserId: selectedPayerId, 
-            description: desc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, 
+            description: dbDesc, rawAmount: rawAmount, currency: currency, exchangeRate: CURRENT_RATE, splitMode: mode, 
             splitDetailString: JSON.stringify(splitDetailObj), displaySplitLocalString: JSON.stringify(displaySplitLocalObj),
             customDateTime: formattedConsumeTime
         };
@@ -1190,7 +1193,7 @@
           const safeDesc = desc.replace(/([-\/])/g, '$1\u200B');
           const safeRawAmt = (multiplier === 1 ? rawAmount.toLocaleString() : rawAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})).replace(/([.,])/g, '$1\u200B');
           
-          const notifyMsg = `📝 ${safeDesc}\n💰 ${currency}${safeRawAmt}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
+          const notifyMsg = `📝 ${safeDesc}\n💰 ${currency} ${safeRawAmt}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
           
           document.getElementById('descInput').value = '';   
