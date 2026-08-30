@@ -329,7 +329,8 @@
     let localAlias = ""; 
     let isSyncComplete = false;
     let LIVE_SUMMARY = "";
-    // UUID 對應字典與失聯帳號清單
+    let needRefreshHistory = false;
+    
     let uuidToNameMap = {};
     let manualAccounts = [];
     let brokenLinks = [];
@@ -383,7 +384,6 @@
       }, 150);
     });
     
-    // 🟢 重置並隱藏上方標籤
     function resetConsumeTime() {
        const tzOffset = (new Date()).getTimezoneOffset() * 60000;
        const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 16);
@@ -394,11 +394,9 @@
        document.getElementById('timeStatusText').classList.add('hidden');
     }
 
-    // 🟢 監聽時間變更 (若空值或預設值則隱藏，否則顯示於 Label 右側)
     document.getElementById('consumeTimeInput').addEventListener('change', function(e) {
        const textSpan = document.getElementById('timeStatusText');
        
-       // 空值斷路防禦：若在系統轉盤點擊清除，強制重新抓取當下時間並縮回
        if (!e.target.value) {
            resetConsumeTime();
            return;
@@ -440,7 +438,13 @@
       if(tab === 'history' || tab === 'dashboard') { 
           bottomBar.classList.add('btn-hidden');
           appContainer.style.height = '100%'; 
-          if(tab === 'history') renderHistory(); 
+          if(tab === 'history') {
+             if (needRefreshHistory) {
+                 refreshHistoryData();
+             } else {
+                 renderHistory();
+             }
+          } 
       } else { 
           bottomBar.classList.remove('btn-hidden');
           appContainer.style.height = 'calc(100% - 76px)'; 
@@ -491,6 +495,27 @@
       document.getElementById('dateFilters').innerHTML = buildFilterHtml('date', uniqueDates, selectedDates);
       document.getElementById('payerFilters').innerHTML = buildFilterHtml('payer', MEMBER_LIST, selectedPayers);
       document.getElementById('splitterFilters').innerHTML = buildFilterHtml('splitter', MEMBER_LIST, selectedSplitters);
+    }
+
+    async function refreshHistoryData() {
+        const container = document.getElementById('historyListContainer');
+        container.innerHTML = `<div class="text-center text-sm text-teal-600 py-10 animate-pulse font-bold flex flex-col items-center justify-center gap-3"><div class="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div><div>正在同步最新帳目...</div></div>`;
+        try {
+            const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
+            const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            if (result.status === "success") {
+                ALL_EXPENSES = result.expenses || [];
+                LIVE_SUMMARY = result.liveSummary || "";
+                localStorage.setItem("nomad_cache_" + currentTripId, JSON.stringify(result));
+                needRefreshHistory = false;
+                initHistoryFilters();
+                renderHistory();
+            } else throw new Error();
+        } catch(e) {
+            showToast("同步失敗，顯示本地暫存資料", "error");
+            renderHistory();
+        }
     }
 
     function renderHistory() {
@@ -626,7 +651,7 @@
                  <span class="text-sm font-medium text-gray-700">${displayName}</span>
                  ${canDelete && !IS_ARCHIVED ? 
                      `<button type="button" onclick="promptRemoveMember('${id}', '${displayName}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
-                     `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">${IS_ARCHIVED ? '已封存' : '無法移除(有關聯)'}</span>`
+                     `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">${IS_ARCHIVED ? '已封存' : '無法移除(有关聯)'}</span>`
                  }
              </div>`;
        });
@@ -866,7 +891,12 @@
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
         let totalMetric = 0;
-        document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value.replace(/,/g, '')) || 0));
+        let activeInputs = [];
+        document.querySelectorAll('.split-input').forEach(input => {
+            let val = parseFloat(input.value.replace(/,/g, '')) || 0;
+            totalMetric += val;
+            if (val > 0) activeInputs.push(input);
+        });
         if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`;
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 請輸入有效份數`; return;
         }
@@ -879,19 +909,27 @@
         }
         
         let calculatedSumInt = 0;
-        let inputs = document.querySelectorAll('.split-input');
         let rawAmountInt = Math.round(rawAmount * multiplier);
-        inputs.forEach((input, idx) => { 
+        activeInputs.forEach((input, idx) => { 
             let val = parseFloat(input.value.replace(/,/g, '')) || 0; 
             let assignedInt = Math.floor(rawAmountInt * (val / totalMetric)); 
             calculatedSumInt += assignedInt; 
-            if (idx === inputs.length - 1) assignedInt += (rawAmountInt - calculatedSumInt); 
+            if (idx === activeInputs.length - 1) assignedInt += (rawAmountInt - calculatedSumInt); 
             const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result'); 
             if(res) { 
                let displayVal = assignedInt / multiplier;
                res.innerText = multiplier === 1 ? displayVal.toLocaleString() : displayVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
             } 
         });
+        
+        document.querySelectorAll('.split-input').forEach(input => {
+            let val = parseFloat(input.value.replace(/,/g, '')) || 0;
+            if (val <= 0) {
+                const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result');
+                if(res) res.innerText = "-";
+            }
+        });
+        
         statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.innerText = "💾 儲存並同步至群組";
       }
     }
@@ -1018,37 +1056,53 @@
          });
       } 
       else if (mode === "EXACT") { 
+         let activeIds = [];
          const inputs = document.querySelectorAll('.split-input');
          inputs.forEach(input => { 
              let val = parseFloat(input.value.replace(/,/g, '')) || 0; let id = input.getAttribute('data-id'); 
              displaySplitLocalObj[id] = val;
              splitDetailObj[id] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); 
+             if (val > 0) activeIds.push(id);
          });
          let calculatedTwdSum = Object.values(splitDetailObj).reduce((a, b) => a + b, 0); let residue = totalTwd - calculatedTwdSum; 
-         const lastPerson = Array.from(inputs).pop().getAttribute('data-id');
-         if(residue !== 0) splitDetailObj[lastPerson] += residue; 
+         if(residue !== 0 && activeIds.length > 0) {
+             const lastPerson = activeIds[activeIds.length - 1];
+             splitDetailObj[lastPerson] += residue; 
+         }
       } 
       else if (mode === "SHARE" || mode === "PERCENT") { 
          const inputs = document.querySelectorAll('.split-input');
          let totalMetric = 0, metricMap = {}; 
-         inputs.forEach(input => { let val = parseFloat(input.value.replace(/,/g, '')) || 0; let id = input.getAttribute('data-id'); metricMap[id] = val; totalMetric += val; });
+         let activeIds = [];
+         inputs.forEach(input => { 
+             let val = parseFloat(input.value.replace(/,/g, '')) || 0; 
+             let id = input.getAttribute('data-id'); 
+             metricMap[id] = val; 
+             totalMetric += val; 
+             if (val > 0) activeIds.push(id);
+         });
          
          let calculatedSumTwd = 0; let calculatedSumRawInt = 0;
          let rawAmountInt = Math.round(rawAmount * multiplier);
          
          MEMBER_LIST.forEach(id => { 
-             splitDetailObj[id] = Math.round(totalTwd * (metricMap[id] / totalMetric)); calculatedSumTwd += splitDetailObj[id]; 
-             
-             let assignedRawInt = Math.floor(rawAmountInt * (metricMap[id] / totalMetric));
-             displaySplitLocalObj[id] = assignedRawInt / multiplier;
-             calculatedSumRawInt += assignedRawInt;
+             if (metricMap[id] > 0) {
+                 splitDetailObj[id] = Math.round(totalTwd * (metricMap[id] / totalMetric)); calculatedSumTwd += splitDetailObj[id]; 
+                 
+                 let assignedRawInt = Math.floor(rawAmountInt * (metricMap[id] / totalMetric));
+                 displaySplitLocalObj[id] = assignedRawInt / multiplier;
+                 calculatedSumRawInt += assignedRawInt;
+             } else {
+                 splitDetailObj[id] = 0;
+                 displaySplitLocalObj[id] = 0;
+             }
          });
          let residueTwd = totalTwd - calculatedSumTwd; 
          let residueRawInt = rawAmountInt - calculatedSumRawInt;
          
-         if(residueTwd !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residueTwd;
-         if(residueRawInt !== 0 && MEMBER_LIST.length > 0) {
-             let lastId = MEMBER_LIST[MEMBER_LIST.length - 1];
+         if(residueTwd !== 0 && activeIds.length > 0) splitDetailObj[activeIds[activeIds.length - 1]] += residueTwd;
+         if(residueRawInt !== 0 && activeIds.length > 0) {
+             let lastId = activeIds[activeIds.length - 1];
              displaySplitLocalObj[lastId] = Math.round((displaySplitLocalObj[lastId] * multiplier) + residueRawInt) / multiplier;
          }
       }
@@ -1064,6 +1118,7 @@
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
         if (result.status === "success") {
           showToast("儲存成功！", "success");
+          needRefreshHistory = true;
           localStorage.removeItem("nomad_cache_" + currentTripId);
           let detailArr = []; const rows = document.getElementById('splitDetailContainer').children;
           Array.from(rows).forEach(row => { 
@@ -1078,7 +1133,7 @@
           });
           const detailText = detailArr.join(" | ");
           
-         const notifyMsg = `📝 ${desc}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
+          const notifyMsg = `📝 ${desc}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
           
           document.getElementById('descInput').value = '';   
@@ -1408,10 +1463,8 @@
         }
     }
 
-    function openSummaryModal() {
-       hapticVibrate(50);
+    function renderSummaryContent() {
        let displayStr = LIVE_SUMMARY || "目前尚無結算資料或已結清。";
-       
        let cleanStr = displayStr.replace(/\n\s*(NT\$)/g, ' $1'); 
        cleanStr = cleanStr.replace(/\n\n+/g, '\n');
        
@@ -1442,8 +1495,34 @@
        const d = new Date();
        const nowStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
        document.getElementById('summaryTimestamp').innerText = nowStr;
-       
+    }
+
+    async function openSummaryModal() {
+       hapticVibrate(50);
        document.getElementById('summaryModal').classList.remove('hidden');
+
+       if (needRefreshHistory) {
+           document.getElementById('summaryContentDisplay').innerHTML = `<div class="text-center text-sm text-teal-600 py-10 animate-pulse font-bold flex flex-col items-center justify-center gap-3"><div class="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div><div>結算同步中...</div></div>`;
+           try {
+               const payload = { action: "initWeb", tripId: currentTripId, groupId: currentGroupId, userId: currentUserProfile.userId };
+               const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+               const result = await res.json();
+               if (result.status === "success") {
+                   ALL_EXPENSES = result.expenses || [];
+                   LIVE_SUMMARY = result.liveSummary || "";
+                   localStorage.setItem("nomad_cache_" + currentTripId, JSON.stringify(result));
+                   needRefreshHistory = false;
+                   initHistoryFilters();
+                   renderHistory();
+                   renderSummaryContent();
+               } else throw new Error();
+           } catch(e) {
+               showToast("同步失敗", "error");
+               renderSummaryContent();
+           }
+       } else {
+           renderSummaryContent();
+       }
     }
     
     function closeSummaryModal() {
