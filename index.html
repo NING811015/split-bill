@@ -626,7 +626,7 @@
            let safeTargetDesc = targetDesc.replace(/([-\/.,])/g, '$1\u200B');
            
            // 發送推播 (不使用 await 阻塞畫面)
-           liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${safeTargetDesc}` }]).catch(e => console.warn(e));
+           liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了帳目\n\n${safeTargetDesc}` }]).catch(e => console.warn(e));
            
            // 🟢 關閉彈窗、清除舊快取、呼叫無痛局部刷新
            closeDeleteModal();
