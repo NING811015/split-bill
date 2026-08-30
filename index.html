@@ -1321,9 +1321,8 @@
           else if (currentUserProfile && MEMBER_LIST.includes(currentUserProfile.userId)) { payerSel.value = currentUserProfile.userId; }
           
           const curSelect = document.getElementById('currencySelect');
-          let prevSelectedCur = curSelect.value;
           curSelect.innerHTML = Array.from(localSupportedCurrencies).map(c => `<option value="${c}">${c}</option>`).join('');
-          curSelect.value = prevSelectedCur || localDefaultCurrency;
+          curSelect.value = localDefaultCurrency;
           document.getElementById('rateDisplay').innerText = `(1 : ${CURRENT_RATE} TWD)`;
           document.getElementById('tripNameDisplay').innerHTML =
             `${IS_ARCHIVED ? '📦' : '✈️'} ${result.tripName}
