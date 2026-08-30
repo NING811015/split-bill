@@ -1089,7 +1089,6 @@
           
           renderSplitDetailAdd(); 
           calculateLivePreview();
-          resetConsumeTime(); 
         } else throw new Error();
       } catch (err) { showToast("網絡通訊錯誤，請重試", "error"); hapticVibrate([50, 50, 50]); btn.disabled = false; btn.innerText = "💾 儲存並同步至群組";
       }
