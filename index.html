@@ -625,7 +625,7 @@
            // 🟢 注入零寬字元隱形結界，防堵 LINE 撤銷推播藍字
            let safeTargetDesc = targetDesc.replace(/([-\/.,])/g, '$1\u200B');
            await liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${safeTargetDesc}` }]);
-           setTimeout(() => liff.closeWindow(), 1000);
+           setTimeout(() => window.location.reload(), 1000);
         } else throw new Error();
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false;
       }
