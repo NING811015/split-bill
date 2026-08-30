@@ -229,7 +229,7 @@
                 <span id="timeStatusText" class="text-[11px] font-medium text-gray-500 tracking-tight hidden"></span>
               </div>
               <div class="relative flex items-center">
-                <input type="text" id="descInput" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="例: 扭蛋" class="w-full bg-gray-50 border border-gray-100 rounded-lg h-10 pl-3 pr-10 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
+                <input type="text" id="descInput" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="例: 扭蛋" class="live-trigger w-full bg-gray-50 border border-gray-100 rounded-lg h-10 pl-3 pr-10 focus:outline-none focus:bg-white focus:ring-2 focus:ring-teal-400 text-base shadow-inner transition-all">
                 <div class="absolute right-0 h-full flex items-center pr-3">
                    <span class="text-[14px] text-gray-400 pointer-events-none">🕒</span>
                    <input type="datetime-local" id="consumeTimeInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -826,19 +826,20 @@
       });
     }
 
-    function calculateLivePreview() {
+function calculateLivePreview() {
       const amountStr = document.getElementById('amountInput').value || "0";
       const rawAmount = parseFloat(amountStr.replace(/,/g, '')) || 0;
+      const desc = document.getElementById('descInput').value.trim(); // 🟢 取得即時消費項目字串
       const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const multiplier = ['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'PHP', 'CLP', 'COP'].includes(currency.toUpperCase()) ? 1 : 100;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
       const twdPreview = document.getElementById('twdPreviewText');
-      btn.disabled = false; 
-      
+
       if (rawAmount <= 0) { 
         statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`;
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
         btn.innerText = "🔒 請輸入有效金額";
+        btn.disabled = true; // 🟢 補上真實物理鎖定
         twdPreview.classList.add('hidden');
         Array.from(rows).forEach(row => { const res = row.querySelector('.live-result'); if(res) res.innerText = ""; }); 
         return;
@@ -852,14 +853,20 @@
          statusBar.innerHTML = `<span class="text-teal-600 animate-pulse">⏳ 正在與資料庫安全校準...</span>`;
          btn.className = "w-full bg-teal-500 text-white font-bold text-base rounded-xl py-3 shadow-md animate-pulse";
          btn.innerText = "⏳ 正在對齊數據...";
+         btn.disabled = true; // 🟢 補上真實物理鎖定
          return;
       }
 
-      btn.className = "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
+      let isCalculationValid = false; // 🟢 追蹤數學計算是否通過
+
       if (mode === "EQUAL") {
         const checked = document.querySelectorAll('.split-checkbox:checked');
-        if (checked.length === 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象";
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; return;
+        if (checked.length === 0) { 
+            statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; 
+            btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
+            btn.innerText = "🔒 需選擇分帳對象";
+            btn.disabled = true; // 🟢 補上真實物理鎖定
+            return;
         }
         
         let rawAmountInt = Math.round(rawAmount * multiplier);
@@ -874,19 +881,30 @@
                 cIdx++; 
             } else if (res) { res.innerText = "-"; } 
         });
-        statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; btn.innerText = "💾 儲存並同步至群組";
+        statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; 
+        isCalculationValid = true;
       } 
       else if (mode === "EXACT") {
         let currentForeignSum = 0;
         document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value.replace(/,/g, '')) || 0)); 
         let diff = rawAmount - currentForeignSum;
-        if (Math.abs(diff) < (multiplier === 1 ? 0.1 : 0.01)) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.innerText = "💾 儲存並同步至群組";
+        if (Math.abs(diff) < (multiplier === 1 ? 0.1 : 0.01)) { 
+            statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; 
+            isCalculationValid = true;
         } 
-        else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)}`;
+        else if (diff > 0) { 
+            statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
+            btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
+            btn.innerText = `🔒 尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)}`;
+            btn.disabled = true; // 🟢 補上真實物理鎖定
+            return;
         } 
-        else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金額超出`;
+        else { 
+            statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
+            btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
+            btn.innerText = `🔒 金額超出`;
+            btn.disabled = true; // 🟢 補上真實物理鎖定
+            return;
         }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
@@ -897,14 +915,19 @@
             totalMetric += val;
             if (val > 0) activeInputs.push(input);
         });
-        if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`;
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 請輸入有效份數`; return;
+        if (mode === "SHARE" && totalMetric <= 0) { 
+            statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`;
+            btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
+            btn.innerText = `🔒 請輸入有效份數`; 
+            btn.disabled = true; // 🟢 補上真實物理鎖定
+            return;
         }
         
         if (mode === "PERCENT" && Math.abs(totalMetric - 100) > 0.01) { 
             statusBar.innerHTML = `<span class="text-rose-500">❌ 比例須等於 100% (目前 ${totalMetric}%)</span>`;
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
             btn.innerText = `🔒 比例須等於 100%`; 
+            btn.disabled = true; // 🟢 補上真實物理鎖定
             return;
         }
         
@@ -930,7 +953,21 @@
             }
         });
         
-        statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.innerText = "💾 儲存並同步至群組";
+        statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; 
+        isCalculationValid = true;
+      }
+
+      // 🟢 最終防線：消費項目檢查
+      if (isCalculationValid) {
+          if (!desc) {
+              btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
+              btn.innerText = "🔒 請輸入消費項目";
+              btn.disabled = true;
+          } else {
+              btn.className = "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
+              btn.innerText = "💾 儲存並同步至群組";
+              btn.disabled = false;
+          }
       }
     }
 
