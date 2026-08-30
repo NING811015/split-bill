@@ -1082,6 +1082,10 @@
           
           document.getElementById('descInput').value = '';   
           document.getElementById('amountInput').value = ''; 
+          document.getElementById('twdPreviewText').classList.add('hidden');
+          
+          document.querySelectorAll('.split-input').forEach(inp => inp.value = '');
+          document.querySelectorAll('.split-checkbox').forEach(cb => cb.checked = true);
           
           renderSplitDetailAdd(); 
           calculateLivePreview();
@@ -1452,7 +1456,16 @@
       hapticVibrate(20);
       document.querySelectorAll('.split-mode-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById('splitModeSelect').value = btn.dataset.mode;
+      
+      const prevMode = document.getElementById('splitModeSelect').value;
+      const newMode = btn.dataset.mode;
+      document.getElementById('splitModeSelect').value = newMode;
+      
+      if (prevMode !== newMode) {
+          document.querySelectorAll('.split-input').forEach(inp => inp.value = '');
+          document.querySelectorAll('.split-checkbox').forEach(cb => cb.checked = true);
+      }
+      
       renderSplitDetailAdd();
       calculateLivePreview();
     });
