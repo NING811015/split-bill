@@ -624,8 +624,14 @@
            let targetDesc = document.getElementById('deleteTargetDesc').innerText;
            // 🟢 注入零寬字元隱形結界，防堵 LINE 撤銷推播藍字
            let safeTargetDesc = targetDesc.replace(/([-\/.,])/g, '$1\u200B');
-           await liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${safeTargetDesc}` }]);
-           setTimeout(() => window.location.reload(), 1000);
+           
+           // 發送推播 (不使用 await 阻塞畫面)
+           liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了一筆帳目\n\n${safeTargetDesc}` }]).catch(e => console.warn(e));
+           
+           // 🟢 關閉彈窗、清除舊快取、呼叫無痛局部刷新
+           closeDeleteModal();
+           localStorage.removeItem("nomad_cache_" + currentTripId);
+           refreshHistoryData();
         } else throw new Error();
       } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false;
       }
