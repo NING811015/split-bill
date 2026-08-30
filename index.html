@@ -532,7 +532,12 @@
           }
 
           let payerDisplay = uuidToNameMap[exp.payer] || exp.payer;
-          let splitStr = Object.entries(splitObj).filter(([k,v]) =>Number(v)>0).map(([k,v]) => `<span class="font-medium text-teal-600">${uuidToNameMap[k] || k} </span><span class="font-mono tabular-nums text-teal-600 ml-0.5">${v}</span>`).join(' <span class="text-teal-200/60">|</span> ');
+          let splitStr = Object.entries(splitObj).filter(([k,v]) =>Number(v)>0).map(([k,v]) => {
+              const displayV = Number(v) % 1 === 0 ? Number(v).toLocaleString() : Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+              return `<span class="font-medium text-teal-600">${uuidToNameMap[k] || k} </span><span class="font-mono tabular-nums text-teal-600 ml-0.5">${displayV}</span>`;
+          }).join(' <span class="text-teal-200/60">|</span> ');
+
+          const displayRawAmt = Number(exp.rawAmount) % 1 === 0 ? Number(exp.rawAmount).toLocaleString() : Number(exp.rawAmount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
           htmlOutput += `
             <div class="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex justify-between items-start relative hover:shadow-md transition-shadow">
@@ -547,7 +552,7 @@
               
               <div class="flex flex-col items-end shrink-0 pr-5 self-center">
                 <div class="text-base font-bold text-teal-600 font-mono tabular-nums leading-tight">
-                  ${exp.rawAmount.toLocaleString()} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
+                  ${displayRawAmt} <span class="text-[10px] text-teal-400 font-sans font-normal">${exp.currency}</span>
                 </div>
                 <div class="text-[11px] text-gray-400 font-mono tabular-nums leading-tight mt-0.5">
                   ≈ NT$ ${exp.twdAmount.toLocaleString()}
@@ -730,7 +735,7 @@
     function confirmNewCurrency() {
         if(IS_ARCHIVED) return;
         let code = document.getElementById('setNewCurCode').value.trim().toUpperCase();
-        let rate = parseFloat(document.getElementById('setNewRate').value.trim());
+        let rate = parseFloat(document.getElementById('setNewRate').value.replace(/,/g, ''));
 
         if (code.length !== 3) return showToast("請輸入3碼英文幣別代碼", "error");
         if (!rate || isNaN(rate) || rate <= 0) return showToast("請輸入有效匯率", "error");
@@ -794,8 +799,10 @@
     }
 
     function calculateLivePreview() {
-      const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0;
+      const amountStr = document.getElementById('amountInput').value || "0";
+      const rawAmount = parseFloat(amountStr.replace(/,/g, '')) || 0;
       const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
+      const multiplier = ['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'PHP', 'CLP', 'COP'].includes(currency.toUpperCase()) ? 1 : 100;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
       btn.disabled = false; 
       
@@ -820,26 +827,37 @@
         if (checked.length === 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; btn.innerText = "🔒 需選擇分帳對象";
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; return;
         }
-        let base = Math.floor(rawAmount / checked.length);
-        let residue = rawAmount - (base * checked.length); let cIdx = 0;
-        Array.from(rows).forEach(row => { const cb = row.querySelector('.split-checkbox'); const res = row.querySelector('.live-result'); if (cb && cb.checked) { let val = base + (cIdx === checked.length - 1 ? residue : 0); res.innerText = `${val.toLocaleString()}`; cIdx++; } else if (res) { res.innerText = "-"; } });
+        
+        let rawAmountInt = Math.round(rawAmount * multiplier);
+        let baseInt = Math.floor(rawAmountInt / checked.length);
+        let residueInt = rawAmountInt - (baseInt * checked.length); let cIdx = 0;
+        Array.from(rows).forEach(row => { 
+            const cb = row.querySelector('.split-checkbox'); const res = row.querySelector('.live-result'); 
+            if (cb && cb.checked) { 
+                let valInt = baseInt + (cIdx === checked.length - 1 ? residueInt : 0); 
+                let val = valInt / multiplier;
+                res.innerText = multiplier === 1 ? val.toLocaleString() : val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
+                cIdx++; 
+            } else if (res) { res.innerText = "-"; } 
+        });
         statusBar.innerHTML = `<span class="text-emerald-600">✅ 均分完成</span>`; btn.innerText = "💾 儲存並同步至群組";
       } 
       else if (mode === "EXACT") {
         let currentForeignSum = 0;
-        document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value) || 0)); let diff = rawAmount - currentForeignSum;
-        if (Math.abs(diff) < 0.1) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.innerText = "💾 儲存並同步至群組";
+        document.querySelectorAll('.split-input').forEach(input => currentForeignSum += (parseFloat(input.value.replace(/,/g, '')) || 0)); 
+        let diff = rawAmount - currentForeignSum;
+        if (Math.abs(diff) < (multiplier === 1 ? 0.1 : 0.01)) { statusBar.innerHTML = `<span class="text-emerald-600">✅ 帳目平衡</span>`; btn.innerText = "💾 儲存並同步至群組";
         } 
-        else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(0)} ${currency}</span>`;
-        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 尚差 ${diff.toFixed(0)}`;
+        else if (diff > 0) { statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
+        btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)}`;
         } 
-        else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(0)} ${currency}</span>`;
+        else { statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 金額超出`;
         }
       }
       else if (mode === "SHARE" || mode === "PERCENT") {
         let totalMetric = 0;
-        document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value) || 0));
+        document.querySelectorAll('.split-input').forEach(input => totalMetric += (parseFloat(input.value.replace(/,/g, '')) || 0));
         if (mode === "SHARE" && totalMetric <= 0) { statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`;
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; btn.innerText = `🔒 請輸入有效份數`; return;
         }
@@ -851,9 +869,20 @@
             return;
         }
         
-        let calculatedSum = 0;
+        let calculatedSumInt = 0;
         let inputs = document.querySelectorAll('.split-input');
-        inputs.forEach((input, idx) => { let val = parseFloat(input.value) || 0; let assigned = Math.floor(rawAmount * (val / totalMetric)); calculatedSum += assigned; if (idx === inputs.length - 1) assigned += (rawAmount - calculatedSum); const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result'); if(res) res.innerText = `${assigned.toLocaleString()}`; });
+        let rawAmountInt = Math.round(rawAmount * multiplier);
+        inputs.forEach((input, idx) => { 
+            let val = parseFloat(input.value.replace(/,/g, '')) || 0; 
+            let assignedInt = Math.floor(rawAmountInt * (val / totalMetric)); 
+            calculatedSumInt += assignedInt; 
+            if (idx === inputs.length - 1) assignedInt += (rawAmountInt - calculatedSumInt); 
+            const res = input.closest('div.flex.items-center.justify-between').querySelector('.live-result'); 
+            if(res) { 
+               let displayVal = assignedInt / multiplier;
+               res.innerText = multiplier === 1 ? displayVal.toLocaleString() : displayVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); 
+            } 
+        });
         statusBar.innerHTML = `<span class="text-emerald-600">✅ 換算完成</span>`; btn.innerText = "💾 儲存並同步至群組";
       }
     }
@@ -932,24 +961,27 @@
 
     async function submitExpense() {
       if (IS_ARCHIVED) return showToast("已封存旅程無法新增帳目", "error");
-      const rawAmount = parseFloat(document.getElementById('amountInput').value) || 0;
+      const amountStr = document.getElementById('amountInput').value || "0";
+      const rawAmount = parseFloat(amountStr.replace(/,/g, '')) || 0;
       const mode = document.getElementById('splitModeSelect').value;
+      const currency = document.getElementById('currencySelect').value;
+      const multiplier = ['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'PHP', 'CLP', 'COP'].includes(currency.toUpperCase()) ? 1 : 100;
+      
       if (rawAmount <= 0) return showToast("請輸入有效金額", "error");
       if (mode === "PERCENT") {
          let sum = 0;
-         document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
+         document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value.replace(/,/g, '')) || 0));
          if (Math.abs(sum - 100) > 0.01) return showToast("比例總和必須為 100%", "error");
       }
       if (mode === "EXACT") {
          let sum = 0;
-         document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value) || 0));
-         if (Math.abs(rawAmount - sum) > 0.1) return showToast("分帳總額不平衡", "error");
+         document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value.replace(/,/g, '')) || 0));
+         if (Math.abs(rawAmount - sum) > (multiplier === 1 ? 0.1 : 0.01)) return showToast("分帳總額不平衡", "error");
       }
 
       hapticVibrate(50);
       const btn = document.getElementById('submitBtn'); 
       const desc = document.getElementById('descInput').value.trim(); 
-      const currency = document.getElementById('currencySelect').value;
       const selectedPayerId = document.getElementById('payerSelect').value;
       const selectedPayerName = document.getElementById('payerSelect').options[document.getElementById('payerSelect').selectedIndex].text;
       
@@ -962,18 +994,23 @@
       
       if (mode === "EQUAL") { 
          const checkboxes = document.querySelectorAll('.split-checkbox:checked');
-         let base = Math.floor(totalTwd / checkboxes.length); let residue = totalTwd - (base * checkboxes.length); let rawBase = Math.floor(rawAmount / checkboxes.length);
-         let rawResidue = rawAmount - (rawBase * checkboxes.length);
+         let twdBase = Math.floor(totalTwd / checkboxes.length); 
+         let twdResidue = totalTwd - (twdBase * checkboxes.length); 
+         
+         let rawAmountInt = Math.round(rawAmount * multiplier);
+         let rawBaseInt = Math.floor(rawAmountInt / checkboxes.length);
+         let rawResidueInt = rawAmountInt - (rawBaseInt * checkboxes.length);
+         
          checkboxes.forEach((cb, idx) => { 
              let id = cb.getAttribute('data-id'); 
-             splitDetailObj[id] = base + (idx === checkboxes.length - 1 ? residue : 0); 
-             displaySplitLocalObj[id] = rawBase + (idx === checkboxes.length - 1 ? rawResidue : 0);
+             splitDetailObj[id] = twdBase + (idx === checkboxes.length - 1 ? twdResidue : 0); 
+             displaySplitLocalObj[id] = (rawBaseInt + (idx === checkboxes.length - 1 ? rawResidueInt : 0)) / multiplier;
          });
       } 
       else if (mode === "EXACT") { 
          const inputs = document.querySelectorAll('.split-input');
          inputs.forEach(input => { 
-             let val = parseFloat(input.value) || 0; let id = input.getAttribute('data-id'); 
+             let val = parseFloat(input.value.replace(/,/g, '')) || 0; let id = input.getAttribute('data-id'); 
              displaySplitLocalObj[id] = val;
              splitDetailObj[id] = Math.round(val * CURRENT_RATE * (1 + GLOBAL_FEE_RATE)); 
          });
@@ -984,15 +1021,26 @@
       else if (mode === "SHARE" || mode === "PERCENT") { 
          const inputs = document.querySelectorAll('.split-input');
          let totalMetric = 0, metricMap = {}; 
-         inputs.forEach(input => { let val = parseFloat(input.value) || 0; let id = input.getAttribute('data-id'); metricMap[id] = val; totalMetric += val; });
-         let calculatedSumTwd = 0; let calculatedSumRaw = 0;
+         inputs.forEach(input => { let val = parseFloat(input.value.replace(/,/g, '')) || 0; let id = input.getAttribute('data-id'); metricMap[id] = val; totalMetric += val; });
+         
+         let calculatedSumTwd = 0; let calculatedSumRawInt = 0;
+         let rawAmountInt = Math.round(rawAmount * multiplier);
+         
          MEMBER_LIST.forEach(id => { 
              splitDetailObj[id] = Math.round(totalTwd * (metricMap[id] / totalMetric)); calculatedSumTwd += splitDetailObj[id]; 
-             displaySplitLocalObj[id] = Math.floor(rawAmount * (metricMap[id] / totalMetric)); calculatedSumRaw += displaySplitLocalObj[id];
+             
+             let assignedRawInt = Math.floor(rawAmountInt * (metricMap[id] / totalMetric));
+             displaySplitLocalObj[id] = assignedRawInt / multiplier;
+             calculatedSumRawInt += assignedRawInt;
          });
-         let residueTwd = totalTwd - calculatedSumTwd; let residueRaw = rawAmount - calculatedSumRaw;
+         let residueTwd = totalTwd - calculatedSumTwd; 
+         let residueRawInt = rawAmountInt - calculatedSumRawInt;
+         
          if(residueTwd !== 0 && MEMBER_LIST.length > 0) splitDetailObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residueTwd;
-         if(residueRaw !== 0 && MEMBER_LIST.length > 0) displaySplitLocalObj[MEMBER_LIST[MEMBER_LIST.length - 1]] += residueRaw;
+         if(residueRawInt !== 0 && MEMBER_LIST.length > 0) {
+             let lastId = MEMBER_LIST[MEMBER_LIST.length - 1];
+             displaySplitLocalObj[lastId] = Math.round((displaySplitLocalObj[lastId] * multiplier) + residueRawInt) / multiplier;
+         }
       }
 
       btn.disabled = true; btn.innerText = "⏳ 儲存交易中...";
@@ -1011,12 +1059,12 @@
           Array.from(rows).forEach(row => { 
             let name = row.querySelector('span.font-medium').innerText; let val = 0;
             let input = row.querySelector('.split-input');
-            if (mode === "EXACT") { val = parseFloat(input.value) || 0; } 
+            if (mode === "EXACT") { val = parseFloat(input.value.replace(/,/g, '')) || 0; } 
             else { 
               let resSpan = row.querySelector('.live-result'); 
-              if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/[^\d.-]/g, '')); } 
+              if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/,/g, '')) || 0; } 
             }
-            if(val > 0) detailArr.push(`${name} ${val.toLocaleString()}`); 
+            if(val > 0) detailArr.push(`${name} ${multiplier === 1 ? val.toLocaleString() : val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`); 
           });
           const detailText = detailArr.join(" | ");
           
