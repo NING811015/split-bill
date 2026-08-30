@@ -826,10 +826,10 @@
       });
     }
 
-function calculateLivePreview() {
+    function calculateLivePreview() {
       const amountStr = document.getElementById('amountInput').value || "0";
       const rawAmount = parseFloat(amountStr.replace(/,/g, '')) || 0;
-      const desc = document.getElementById('descInput').value.trim(); // 🟢 取得即時消費項目字串
+      const desc = document.getElementById('descInput').value.trim();
       const currency = document.getElementById('currencySelect').value; const mode = document.getElementById('splitModeSelect').value;
       const multiplier = ['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'PHP', 'CLP', 'COP'].includes(currency.toUpperCase()) ? 1 : 100;
       const btn = document.getElementById('submitBtn'); const statusBar = document.getElementById('balanceStatus'); const rows = document.getElementById('splitDetailContainer').children;
@@ -839,7 +839,7 @@ function calculateLivePreview() {
         statusBar.innerHTML = `<span class="text-gray-400">請輸入總金額</span>`;
         btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
         btn.innerText = "🔒 請輸入有效金額";
-        btn.disabled = true; // 🟢 補上真實物理鎖定
+        btn.disabled = true;
         twdPreview.classList.add('hidden');
         Array.from(rows).forEach(row => { const res = row.querySelector('.live-result'); if(res) res.innerText = ""; }); 
         return;
@@ -853,11 +853,11 @@ function calculateLivePreview() {
          statusBar.innerHTML = `<span class="text-teal-600 animate-pulse">⏳ 正在與資料庫安全校準...</span>`;
          btn.className = "w-full bg-teal-500 text-white font-bold text-base rounded-xl py-3 shadow-md animate-pulse";
          btn.innerText = "⏳ 正在對齊數據...";
-         btn.disabled = true; // 🟢 補上真實物理鎖定
+         btn.disabled = true;
          return;
       }
 
-      let isCalculationValid = false; // 🟢 追蹤數學計算是否通過
+      let isCalculationValid = false;
 
       if (mode === "EQUAL") {
         const checked = document.querySelectorAll('.split-checkbox:checked');
@@ -865,7 +865,7 @@ function calculateLivePreview() {
             statusBar.innerHTML = `<span class="text-rose-500">❌ 至少需一人</span>`; 
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
             btn.innerText = "🔒 需選擇分帳對象";
-            btn.disabled = true; // 🟢 補上真實物理鎖定
+            btn.disabled = true;
             return;
         }
         
@@ -896,14 +896,14 @@ function calculateLivePreview() {
             statusBar.innerHTML = `<span class="text-teal-500">尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
             btn.innerText = `🔒 尚差 ${diff.toFixed(multiplier === 1 ? 0 : 2)}`;
-            btn.disabled = true; // 🟢 補上真實物理鎖定
+            btn.disabled = true;
             return;
         } 
         else { 
             statusBar.innerHTML = `<span class="text-rose-500">❌ 超出 ${Math.abs(diff).toFixed(multiplier === 1 ? 0 : 2)} ${currency}</span>`;
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
             btn.innerText = `🔒 金額超出`;
-            btn.disabled = true; // 🟢 補上真實物理鎖定
+            btn.disabled = true;
             return;
         }
       }
@@ -919,7 +919,7 @@ function calculateLivePreview() {
             statusBar.innerHTML = `<span class="text-rose-500">❌ 總份數為 0</span>`;
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200"; 
             btn.innerText = `🔒 請輸入有效份數`; 
-            btn.disabled = true; // 🟢 補上真實物理鎖定
+            btn.disabled = true;
             return;
         }
         
@@ -927,7 +927,7 @@ function calculateLivePreview() {
             statusBar.innerHTML = `<span class="text-rose-500">❌ 比例須等於 100% (目前 ${totalMetric}%)</span>`;
             btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
             btn.innerText = `🔒 比例須等於 100%`; 
-            btn.disabled = true; // 🟢 補上真實物理鎖定
+            btn.disabled = true;
             return;
         }
         
@@ -957,7 +957,6 @@ function calculateLivePreview() {
         isCalculationValid = true;
       }
 
-      // 🟢 最終防線：消費項目檢查
       if (isCalculationValid) {
           if (!desc) {
               btn.className = "w-full bg-gray-200 text-gray-500 font-bold text-base rounded-xl py-3 shadow-sm transition-all duration-200";
@@ -1052,6 +1051,11 @@ function calculateLivePreview() {
       const multiplier = ['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'PHP', 'CLP', 'COP'].includes(currency.toUpperCase()) ? 1 : 100;
       
       if (rawAmount <= 0) return showToast("請輸入有效金額", "error");
+      
+      if (mode === "EQUAL") {
+         const checked = document.querySelectorAll('.split-checkbox:checked');
+         if (checked.length === 0) return showToast("請選擇分帳對象", "error");
+      }
       if (mode === "PERCENT") {
          let sum = 0;
          document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value.replace(/,/g, '')) || 0));
@@ -1061,6 +1065,11 @@ function calculateLivePreview() {
          let sum = 0;
          document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value.replace(/,/g, '')) || 0));
          if (Math.abs(rawAmount - sum) > (multiplier === 1 ? 0.1 : 0.01)) return showToast("分帳總額不平衡", "error");
+      }
+      if (mode === "SHARE") {
+         let sum = 0;
+         document.querySelectorAll('.split-input').forEach(i => sum += (parseFloat(i.value.replace(/,/g, '')) || 0));
+         if (sum <= 0) return showToast("總份數必須大於 0", "error");
       }
 
       hapticVibrate(50);
@@ -1157,20 +1166,23 @@ function calculateLivePreview() {
           showToast("儲存成功！", "success");
           needRefreshHistory = true;
           localStorage.removeItem("nomad_cache_" + currentTripId);
-          let detailArr = []; const rows = document.getElementById('splitDetailContainer').children;
-          Array.from(rows).forEach(row => { 
-            let name = row.querySelector('span.font-medium').innerText; let val = 0;
-            let input = row.querySelector('.split-input');
-            if (mode === "EXACT") { val = parseFloat(input.value.replace(/,/g, '')) || 0; } 
-            else { 
-              let resSpan = row.querySelector('.live-result'); 
-              if(resSpan && resSpan.innerText && resSpan.innerText !== "-") { val = parseFloat(resSpan.innerText.replace(/,/g, '')) || 0; } 
-            }
-            if(val > 0) detailArr.push(`${name} ${multiplier === 1 ? val.toLocaleString() : val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`); 
+          
+          let detailArr = [];
+          MEMBER_LIST.forEach(id => {
+              let val = displaySplitLocalObj[id] || 0;
+              if (val > 0) {
+                  let name = uuidToNameMap[id] || id;
+                  let formatted = multiplier === 1 ? val.toLocaleString() : val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                  let safeFormatted = formatted.replace(/([.,])/g, '$1\u200B');
+                  detailArr.push(`${name} ${safeFormatted}`);
+              }
           });
           const detailText = detailArr.join(" | ");
           
-          const notifyMsg = `📝 ${desc}\n💰 ${currency}${rawAmount.toLocaleString()}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
+          const safeDesc = desc.replace(/([-\/])/g, '$1\u200B');
+          const safeRawAmt = (multiplier === 1 ? rawAmount.toLocaleString() : rawAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})).replace(/([.,])/g, '$1\u200B');
+          
+          const notifyMsg = `📝 ${safeDesc}\n💰 ${currency}${safeRawAmt}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
           
           document.getElementById('descInput').value = '';   
