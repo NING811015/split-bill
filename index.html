@@ -255,11 +255,12 @@
           </div>
         </div>
         <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
-          <div class="flex justify-between items-center mb-2">
+          <div class="relative flex items-center mb-2 h-4">
             <label class="block text-xs font-medium text-gray-500">分帳模式</label>
-            <label class="flex items-center space-x-1 cursor-pointer">
-              <input type="checkbox" id="notifyGroupCb" checked class="w-3.5 h-3.5 text-teal-600 rounded border-gray-300 focus:ring-teal-500" onchange="calculateLivePreview()">
-              <span class="text-[11px] font-bold text-gray-500 select-none">推播至群組</span>
+            <!-- 🟢 絕對定位於右側 18% 處 (約第三與第四按鈕交界)，加大字體與勾選框，並替換為暖橘黃色 -->
+            <label class="absolute right-[18%] flex items-center space-x-1.5 cursor-pointer">
+              <input type="checkbox" id="notifyGroupCb" checked class="w-4 h-4 rounded border-gray-300 shadow-sm transition-colors" style="accent-color: #F59E0B;" onchange="calculateLivePreview()">
+              <span class="text-xs font-bold text-gray-500 select-none">推播至群組</span>
             </label>
           </div>
           <div id="splitModeButtons" class="grid grid-cols-4 gap-1.5">
