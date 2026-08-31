@@ -599,16 +599,29 @@
       document.getElementById('footerCountTotal').innerText = renderedCount;
     }
 
-    let pendingDeleteId = null, pendingTripId = null;
+    let pendingDeleteId = null, pendingTripId = null, pendingDeleteDate = null, pendingDeleteDesc = null, pendingDeleteAmount = null, pendingDeleteCurrency = null;
     function promptDelete(id, date, desc, amount, currency, tripId) {
       hapticVibrate([50, 50]);
       pendingDeleteId = id;
       pendingTripId = tripId;
+      pendingDeleteDate = date;
+      pendingDeleteDesc = desc;
+      pendingDeleteAmount = amount;
+      pendingDeleteCurrency = currency;
       document.getElementById('deleteTargetDesc').innerText = `日期：${date}\n項目：${desc}\n金額：${currency} ${amount.toLocaleString()}`;
       document.getElementById('deleteModal').classList.remove('hidden'); 
     }
-    function closeDeleteModal() { pendingDeleteId = null;
-      pendingTripId = null; document.getElementById('deleteModal').classList.add('hidden'); }
+    
+    function closeDeleteModal() { 
+      pendingDeleteId = null; 
+      pendingTripId = null; 
+      pendingDeleteDate = null; 
+      pendingDeleteDesc = null; 
+      pendingDeleteAmount = null; 
+      pendingDeleteCurrency = null;
+      document.getElementById('deleteModal').classList.add('hidden'); 
+    }
+    
     async function executeDelete() {
       if (IS_ARCHIVED) { closeDeleteModal(); return showToast("已封存旅程無法撤銷帳目", "error"); }
       if(!pendingDeleteId) return;
@@ -621,12 +634,14 @@
         const result = await res.json();
         if (result.status === "success") {
            showToast("撤銷成功", "success");
-           let targetDesc = document.getElementById('deleteTargetDesc').innerText;
+           
+           // 🟢 組合新的 LINE 極簡推播格式 (脫鉤網頁 UI)
+           let msg = `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了${pendingDeleteDesc}\n${pendingDeleteDate} | ${pendingDeleteCurrency} ${pendingDeleteAmount.toLocaleString()}`;
            // 🟢 注入零寬字元隱形結界，防堵 LINE 撤銷推播藍字
-           let safeTargetDesc = targetDesc.replace(/([-\/.,])/g, '$1\u200B');
+           let safeMsg = msg.replace(/([-\/.,])/g, '$1\u200B');
            
            // 發送推播 (不使用 await 阻塞畫面)
-           liff.sendMessages([{ type: 'text', text: `🗑️ ${localAlias || currentUserProfile.displayName} 撤銷了帳目\n\n${safeTargetDesc}` }]).catch(e => console.warn(e));
+           liff.sendMessages([{ type: 'text', text: safeMsg }]).catch(e => console.warn(e));
            
            // 🟢 關閉彈窗、清除舊快取、呼叫無痛局部刷新
            closeDeleteModal();
@@ -637,7 +652,12 @@
            btn.innerText = "確定撤銷";
            btn.disabled = false;
         } else throw new Error();
-      } catch(e) { showToast("無權限或撤銷失敗", "error"); hapticVibrate([50, 50, 50]); closeDeleteModal(); btn.innerText = "確定撤銷"; btn.disabled = false;
+      } catch(e) { 
+          showToast("無權限或撤銷失敗", "error"); 
+          hapticVibrate([50, 50, 50]); 
+          closeDeleteModal(); 
+          btn.innerText = "確定撤銷"; 
+          btn.disabled = false;
       }
     }
     
