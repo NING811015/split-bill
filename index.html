@@ -257,9 +257,9 @@
         <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
           <div class="relative flex items-center mb-2 h-4">
             <label class="block text-xs font-medium text-gray-500">分帳模式</label>
-            <!-- 🟢 絕對定位於右側 18% 處 (約第三與第四按鈕交界)，加大字體與勾選框，並替換為暖橘黃色 -->
-            <label class="absolute right-[18%] flex items-center space-x-1.5 cursor-pointer">
-              <input type="checkbox" id="notifyGroupCb" checked class="w-4 h-4 rounded border-gray-300 shadow-sm transition-colors" style="accent-color: #F59E0B;" onchange="calculateLivePreview()">
+            <!-- 🟢 精準絕對定位於 75% 切割線(份數與比例交界處)，替換為系統標準 Teal 綠色 (#14B8A6) -->
+            <label class="absolute left-[75%] -translate-x-1/2 flex items-center space-x-1.5 cursor-pointer">
+              <input type="checkbox" id="notifyGroupCb" checked class="w-4 h-4 rounded border-gray-300 shadow-sm transition-colors" style="accent-color: #14B8A6;" onchange="calculateLivePreview()">
               <span class="text-xs font-bold text-gray-500 select-none">推播至群組</span>
             </label>
           </div>
