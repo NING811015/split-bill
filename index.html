@@ -255,12 +255,10 @@
           </div>
         </div>
         <div class="border-t border-gray-50 pt-2.5 px-3 flex-shrink-0" id="splitModeAnchor">
-          <!-- 🟢 替換為 4 欄網格結構，與下方按鈕完全鏡像對齊 -->
-          <div class="grid grid-cols-4 gap-1.5 mb-2 h-4 items-center">
-            <!-- 佔據左側 2 欄 (對齊平均與拆分) -->
-            <label class="col-span-2 block text-xs font-medium text-gray-500">分帳模式</label>
-            <!-- 佔據右側 2 欄 (對齊份數與比例) 並強制內部置中 -->
-            <label class="col-span-2 flex justify-center items-center space-x-1.5 cursor-pointer whitespace-nowrap">
+          <!-- 🟢 回歸原生 Flexbox 左右貼齊 (justify-between)，徹底消滅所有排版與無障礙風險 -->
+          <div class="flex justify-between items-center mb-2 h-4">
+            <label class="block text-xs font-medium text-gray-500">分帳模式</label>
+            <label class="flex items-center space-x-1.5 cursor-pointer whitespace-nowrap">
               <input type="checkbox" id="notifyGroupCb" checked class="w-4 h-4 rounded border-gray-300 shadow-sm transition-colors" style="accent-color: #64748B;" onchange="calculateLivePreview()">
               <span class="text-xs font-bold text-gray-500 select-none">推播至群組</span>
             </label>
@@ -271,6 +269,8 @@
             <button type="button" class="split-mode-btn" data-mode="SHARE">⚖️份數</button>
             <button type="button" class="split-mode-btn" data-mode="PERCENT">📈比例</button>
           </div>
+          <input type="hidden" id="splitModeSelect" value="EQUAL">
+        </div>
           <input type="hidden" id="splitModeSelect" value="EQUAL">
         </div>
         <div class="bg-slate-50 border-t border-slate-200 flex flex-col flex-grow min-h-0 mt-3 rounded-t-xl">
