@@ -1193,7 +1193,7 @@
           const safeDesc = desc.replace(/([-\/])/g, '$1\u200B');
           const safeRawAmt = (multiplier === 1 ? rawAmount.toLocaleString() : rawAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})).replace(/([.,])/g, '$1\u200B');
           
-          const notifyMsg = `📝 ${safeDesc}\n💰 ${currency} ${safeRawAmt}  (${selectedPayerName}付)\n[明細]\n${detailText}`;
+          const notifyMsg = `📝 ${safeDesc}\n💰 ${currency} ${safeRawAmt}  (${selectedPayerName}付)\n↳ ${detailText}`;
           liff.sendMessages([{ type: 'text', text: notifyMsg }]).catch(err => console.warn("明細推播失敗:", err));
           
           document.getElementById('descInput').value = '';   
