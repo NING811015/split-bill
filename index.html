@@ -663,7 +663,7 @@
                  <span class="text-sm font-medium text-gray-700">${displayName}</span>
                  ${canDelete && !IS_ARCHIVED ? 
                      `<button type="button" onclick="promptRemoveMember('${id}', '${displayName}')" class="text-xs text-rose-500 bg-rose-50 px-3 py-1.5 rounded-lg border border-rose-100 active:bg-rose-100">移除</button>` : 
-                     `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">${IS_ARCHIVED ? '已封存' : '無法移除(有关聯)'}</span>`
+                     `<span class="text-[10px] text-gray-400 bg-gray-50 px-2 py-1 rounded">${IS_ARCHIVED ? '已封存' : '無法移除(有關聯)'}</span>`
                  }
              </div>`;
        });
@@ -713,6 +713,10 @@
        const name = document.getElementById('manualNameInput').value.trim();
        if (!name) return showToast("請輸入暱稱", "error");
        
+       // 🟢 鎖定新增按鈕
+       const btn = document.querySelector('button[onclick="submitManualMember()"]');
+       btn.innerText = "處理中..."; btn.disabled = true;
+       
        const payload = { action: "addManualMember", tripId: currentTripId, realName: name, userId: currentUserProfile.userId };
        fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
          .then(res => res.json())
@@ -722,7 +726,10 @@
                closeManualModal();
                setTimeout(() => window.location.reload(), 1000);
              } else throw new Error(res.message);
-         }).catch(e => showToast(e.message, "error"));
+         }).catch(e => {
+            showToast(e.message, "error");
+            btn.innerText = "確定新增"; btn.disabled = false;
+         });
     }
 
     function renderCurrencyChips() {
@@ -1267,8 +1274,9 @@
       document.getElementById('archiveModal').classList.remove('hidden'); }
     function closeArchiveModal() { document.getElementById('archiveModal').classList.add('hidden'); }
     async function archiveTrip() {
-      closeArchiveModal();
       hapticVibrate([50,50]);
+      const btn = document.getElementById('confirmArchiveBtn');
+      btn.innerText = "處理中..."; btn.disabled = true;
       try {
         const payload = { action: "archiveTrip", tripId: currentTripId, userId: currentUserProfile.userId };
         const res = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) }); const result = await res.json();
@@ -1279,6 +1287,9 @@
            const tripName = document.getElementById('tripNameDisplay').innerText.replace(/📦|✈️/g, '').trim().split('\n')[0];
            const tripUrl = `https://liff.line.me/${MY_LIFF_ID}?tripId=${currentTripId}`;
            
+           // 🟢 結團成功後再關閉彈窗
+           closeArchiveModal();
+
            await liff.sendMessages([{
                type: 'flex', altText: `📦 旅程結團公告｜${tripName}`,
                contents: {
@@ -1301,7 +1312,11 @@
            
            setTimeout(() => liff.closeWindow(), 1000);
         } else throw new Error();
-      } catch(e) { showToast("結團失敗", "error"); }
+      } catch(e) { 
+        showToast("結團失敗", "error"); 
+        closeArchiveModal();
+        btn.innerText = "確定結團"; btn.disabled = false;
+      }
     }
 
     async function submitRegistration() {
