@@ -1009,9 +1009,8 @@
               btn.disabled = true;
           } else {
               const isNotify = document.getElementById('notifyGroupCb').checked;
-              btn.className = isNotify 
-                ? "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]"
-                : "w-full bg-gray-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
+              // 🟢 統一使用系統標準 Teal 綠色，拔除灰色視覺干擾
+              btn.className = "w-full bg-teal-600 text-white font-bold text-base rounded-xl py-3 shadow-md transition-all active:scale-[0.98]";
               btn.innerText = isNotify ? "💾 儲存並同步至群組" : "💾 靜默儲存 (不推播)";
               btn.disabled = false;
           }
